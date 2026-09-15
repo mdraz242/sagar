@@ -1,25 +1,5 @@
 {
   "name": "vyparhub",
   "version": "1.0.0",
-  "private": true,
-  "scripts": {
-    "vercel-build": "echo 'No build needed'",
-    "postinstall": "cd server && npm install"
-  },
-  "dependencies": {
-    "bcryptjs": "^2.4.3",
-    "cors": "^2.8.5",
-    "dotenv": "^16.4.7",
-    "express": "^4.21.2",
-    "express-rate-limit": "^7.5.0",
-    "firebase-admin": "^14.1.0",
-    "helmet": "^8.0.0",
-    "jsonwebtoken": "^9.0.2",
-    "morgan": "^1.10.0",
-    "multer": "^2.2.0",
-    "pg": "^8.13.1",
-    "razorpay": "^2.9.6",
-    "socket.io": "^4.8.3",
-    "zod": "^4.6.4"
-  }
+  "private": true
 }
