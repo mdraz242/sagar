@@ -4,8 +4,13 @@ import multer from "multer";
 import { ApiError } from "../../utils/apiError.js";
 import { logAdminActivity } from "./helpers.js";
 
-const uploadRoot = path.resolve("uploads");
-if (!fs.existsSync(uploadRoot)) fs.mkdirSync(uploadRoot, { recursive: true });
+const isVercel = !!process.env.VERCEL;
+const uploadRoot = isVercel ? "/tmp/uploads" : path.resolve("uploads");
+try {
+  if (!fs.existsSync(uploadRoot)) fs.mkdirSync(uploadRoot, { recursive: true });
+} catch (_) {
+  // Vercel read-only filesystem – uploads go to cloud storage anyway
+}
 
 export const uploadMiddleware = multer({
   storage: multer.memoryStorage(),
