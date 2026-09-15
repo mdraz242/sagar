@@ -1,0 +1,3 @@
+﻿-- Use npm run seed to load bcrypt-hashed demo users and catalog data.
+-- Customer: 9876543210 / Demo@123
+-- Super Admin: 9999999999 / Admin@123

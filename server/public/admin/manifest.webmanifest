@@ -1,0 +1,41 @@
+{
+  "name": "VyparHub Admin",
+  "short_name": "Vypar Admin",
+  "description": "VyparHub internal admin app for managing orders, products, categories, customers and reports.",
+  "start_url": "/admin/",
+  "scope": "/admin/",
+  "display": "standalone",
+  "display_override": ["window-controls-overlay", "standalone", "browser"],
+  "background_color": "#f7f9fc",
+  "theme_color": "#071a3d",
+  "orientation": "any",
+  "categories": ["business", "productivity", "shopping"],
+  "icons": [
+    {
+      "src": "/admin/icons/admin-icon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/admin/icons/admin-v-mark.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Orders",
+      "short_name": "Orders",
+      "url": "/admin/#orders",
+      "icons": [{ "src": "/admin/icons/admin-icon.png", "sizes": "512x512" }]
+    },
+    {
+      "name": "Products",
+      "short_name": "Products",
+      "url": "/admin/#products",
+      "icons": [{ "src": "/admin/icons/admin-icon.png", "sizes": "512x512" }]
+    }
+  ]
+}

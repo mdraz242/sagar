@@ -1,0 +1,971 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>VyparHub Mobile Preview</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --blue: #1A2E5C;
+      --bright-blue: #2E5BFF;
+      --orange: #E94B3C;
+      --orange-2: #FF8A3D;
+      --bg: #F6F7FB;
+      --text: #1A1F2C;
+      --muted: #7A7E8C;
+      --success: #16A34A;
+      --card-bg: #FFFFFF;
+      --shadow-sm: 0 2px 8px rgba(0,0,0,0.06);
+      --shadow-md: 0 8px 24px rgba(0,0,0,0.08);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: #0B1120;
+      font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px 10px;
+    }
+
+    /* Device frame wrapper for desktop viewing */
+    .device-container {
+      position: relative;
+      width: 100%;
+      max-width: 440px;
+      height: 900px;
+      max-height: 94vh;
+      background: #000;
+      border-radius: 44px;
+      padding: 10px;
+      box-shadow: 0 25px 60px -15px rgba(0,0,0,0.8), 0 0 0 1px rgba(255,255,255,0.15), 0 0 40px rgba(46,91,255,0.2);
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Top device speaker/camera notch */
+    .device-notch {
+      position: absolute;
+      top: 18px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 120px;
+      height: 22px;
+      background: #000;
+      border-radius: 20px;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+    }
+    .notch-camera {
+      width: 10px;
+      height: 10px;
+      background: #1e293b;
+      border-radius: 50%;
+      border: 1px solid #334155;
+    }
+    .notch-speaker {
+      width: 40px;
+      height: 4px;
+      background: #1e293b;
+      border-radius: 4px;
+    }
+
+    /* Inner phone screen */
+    .phone {
+      width: 100%;
+      height: 100%;
+      background: var(--bg);
+      border-radius: 36px;
+      overflow-y: auto;
+      overflow-x: hidden;
+      position: relative;
+      padding-bottom: 90px;
+      scroll-behavior: smooth;
+    }
+    .phone::-webkit-scrollbar { display: none; }
+
+    /* Floating quick back button */
+    .portal-back-btn {
+      position: absolute;
+      top: -46px;
+      left: 10px;
+      color: #94A3B8;
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: color 0.2s;
+    }
+    .portal-back-btn:hover { color: #FFFFFF; }
+
+    /* App Header */
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      background: #fff;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+    .status-strip-dummy {
+      height: 30px;
+      background: #fff;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 16px;
+    }
+    .logo {
+      font-size: 22px;
+      font-weight: 900;
+      letter-spacing: -0.03em;
+      color: var(--blue);
+    }
+    .logo span { color: var(--orange); }
+    .wallet-badge {
+      margin-left: auto;
+      border-radius: 999px;
+      background: #FFF1E8;
+      border: 1px solid #FFE0CC;
+      color: var(--orange);
+      padding: 5px 12px;
+      font-size: 11px;
+      font-weight: 800;
+      cursor: pointer;
+    }
+    .avatar {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      color: #fff;
+      font-weight: 900;
+      font-size: 13px;
+      background: linear-gradient(135deg, var(--blue), var(--bright-blue));
+    }
+    .delivery-strip {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: #fff;
+      background: linear-gradient(90deg, #E94B3C 0%, #FF8A3D 100%);
+      padding: 6px 16px;
+      font-size: 11px;
+      font-weight: 800;
+    }
+    .lang-pill {
+      margin-left: auto;
+      background: #fff;
+      color: var(--orange);
+      border-radius: 999px;
+      padding: 2px 8px;
+      font-size: 10px;
+      font-weight: 900;
+    }
+
+    /* Search Bar */
+    .search-wrap {
+      margin: 10px 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: #fff;
+      border: 1.5px solid #E2E8F0;
+      border-radius: 14px;
+      padding: 8px 12px;
+      box-shadow: var(--shadow-sm);
+      transition: border-color 0.2s;
+    }
+    .search-wrap:focus-within {
+      border-color: var(--bright-blue);
+    }
+    .search-wrap input {
+      border: 0;
+      outline: 0;
+      flex: 1;
+      font-size: 13px;
+      font-family: inherit;
+      color: var(--text);
+    }
+    .mic-btn {
+      width: 26px;
+      height: 26px;
+      border: 0;
+      color: #fff;
+      border-radius: 50%;
+      background: var(--bright-blue);
+      cursor: pointer;
+      display: grid;
+      place-items: center;
+      font-size: 12px;
+    }
+
+    /* Hero Banner */
+    .hero {
+      position: relative;
+      margin: 0 14px 16px;
+      overflow: hidden;
+      padding: 16px 130px 16px 16px;
+      color: white;
+      border-radius: 18px;
+      background: linear-gradient(110deg, #1A2E5C 0%, #2E5BFF 55%, #E94B3C 100%);
+      box-shadow: 0 8px 24px rgba(46,91,255,0.25);
+    }
+    .eyebrow {
+      font-size: 9px;
+      font-weight: 900;
+      letter-spacing: .16em;
+      opacity: .95;
+      text-transform: uppercase;
+    }
+    .hero h1 {
+      margin: 4px 0 2px;
+      font-size: 18px;
+      font-weight: 900;
+      line-height: 1.15;
+    }
+    .hero p {
+      margin: 0;
+      font-size: 11px;
+      opacity: .9;
+    }
+    .hero-imgs {
+      position: absolute;
+      right: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      display: flex;
+      align-items: center;
+    }
+    .hero-imgs img {
+      width: 48px;
+      height: 48px;
+      object-fit: contain;
+      background: rgba(255, 255, 255, 0.95);
+      border-radius: 14px;
+      padding: 4px;
+      margin-left: -10px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    }
+
+    /* Sections */
+    section {
+      padding: 0 14px;
+      margin-top: 18px;
+    }
+    .section-head {
+      display: flex;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+    .section-head h2 {
+      margin: 0;
+      font-size: 14px;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+    }
+    .section-head a {
+      margin-left: auto;
+      font-size: 11px;
+      color: var(--bright-blue);
+      font-weight: 800;
+      text-decoration: none;
+      cursor: pointer;
+    }
+
+    /* Category Grid */
+    .cats {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+    }
+    .cat {
+      text-align: center;
+      font-size: 10px;
+      font-weight: 800;
+      line-height: 1.15;
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
+    .cat:hover { transform: translateY(-2px); }
+    .cat-img {
+      width: 54px;
+      height: 54px;
+      margin: 0 auto 5px;
+      border-radius: 16px;
+      display: grid;
+      place-items: center;
+      overflow: hidden;
+      box-shadow: var(--shadow-sm);
+    }
+    .cat-img img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      padding: 5px;
+    }
+
+    /* Feature Tiles */
+    .tiles {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+    }
+    .tile {
+      background: #fff;
+      border-radius: 16px;
+      overflow: hidden;
+      border: 1px solid rgba(0,0,0,0.06);
+      box-shadow: var(--shadow-sm);
+      cursor: pointer;
+    }
+    .tile-top {
+      color: #fff;
+      padding: 5px 8px;
+      font-size: 8px;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .tile h3 {
+      margin: 6px 8px 4px;
+      font-size: 11px;
+      font-weight: 800;
+    }
+    .tile-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 4px;
+      padding: 0 6px 6px;
+    }
+    .tile-grid img {
+      width: 100%;
+      aspect-ratio: 1;
+      object-fit: contain;
+      background: #F8FAFC;
+      border-radius: 6px;
+      padding: 2px;
+    }
+
+    /* Promo Card */
+    .promo {
+      margin: 18px 14px 0;
+      border-radius: 18px;
+      padding: 16px 110px 16px 16px;
+      position: relative;
+      overflow: hidden;
+      color: #fff;
+      background: linear-gradient(120deg, #FF8A3D 0%, #FF5E62 100%);
+      box-shadow: 0 8px 24px rgba(255, 94, 98, 0.25);
+    }
+    .promo h2 {
+      margin: 2px 0;
+      font-size: 22px;
+      font-weight: 900;
+      line-height: 1;
+    }
+    .promo p {
+      font-size: 11px;
+      opacity: 0.9;
+    }
+    .promo img {
+      position: absolute;
+      right: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 58px;
+      height: 58px;
+      object-fit: contain;
+      background: rgba(255,255,255,0.95);
+      border-radius: 14px;
+      padding: 4px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+
+    /* Products Horizontal Scroller */
+    .scroller {
+      display: flex;
+      gap: 10px;
+      overflow-x: auto;
+      padding-bottom: 8px;
+      scrollbar-width: none;
+    }
+    .scroller::-webkit-scrollbar { display: none; }
+
+    /* Product Card */
+    .card {
+      flex: 0 0 156px;
+      background: #fff;
+      border: 1px solid #E2E8F0;
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: var(--shadow-sm);
+      display: flex;
+      flex-direction: column;
+    }
+    .pic {
+      position: relative;
+      aspect-ratio: 1;
+      background: #F8FAFC;
+    }
+    .pic img {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      padding: 8px;
+    }
+    .tag {
+      position: absolute;
+      top: 6px;
+      border-radius: 6px;
+      padding: 2px 5px;
+      color: #fff;
+      font-size: 8px;
+      font-weight: 900;
+    }
+    .tag.left { left: 6px; background: var(--bright-blue); }
+    .tag.right { right: 6px; background: var(--blue); }
+    .pack {
+      position: absolute;
+      left: 12px;
+      right: 12px;
+      bottom: 6px;
+      border-radius: 6px;
+      text-align: center;
+      background: var(--orange);
+      color: #fff;
+      font-size: 9px;
+      font-weight: 900;
+      padding: 2px;
+    }
+    .card-body {
+      padding: 8px;
+      display: flex;
+      flex-direction: column;
+      flex-grow: 1;
+    }
+    .delivery {
+      display: inline-block;
+      background: #FFE9D6;
+      color: #B5430D;
+      border-radius: 4px;
+      padding: 2px 5px;
+      font-size: 8px;
+      font-weight: 900;
+      align-self: flex-start;
+    }
+    .pname {
+      margin: 4px 0;
+      font-size: 11px;
+      font-weight: 800;
+      line-height: 1.2;
+      min-height: 28px;
+    }
+    .price {
+      background: #F6F9FF;
+      border: 1px solid #E0E8FA;
+      border-radius: 8px;
+      padding: 6px;
+      margin-top: auto;
+    }
+    .price strong { font-size: 14px; font-weight: 900; }
+    .price s { color: #A0A4B0; font-size: 9px; }
+    .margin { color: var(--bright-blue); font-size: 9px; font-weight: 900; }
+    
+    .add-btn {
+      width: 100%;
+      margin-top: 6px;
+      border: 1.5px solid var(--success);
+      color: var(--success);
+      background: #fff;
+      border-radius: 8px;
+      padding: 6px;
+      font-size: 11px;
+      font-weight: 900;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .add-btn:hover {
+      background: var(--success);
+      color: #fff;
+    }
+    .add-btn.in-cart {
+      background: var(--success);
+      color: #fff;
+    }
+
+    /* Fixed Bottom App Navigation */
+    .bottom {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: 72px;
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      background: #fff;
+      border-top: 1px solid rgba(0,0,0,0.08);
+      box-shadow: 0 -4px 20px rgba(0,0,0,0.06);
+      border-radius: 0 0 36px 36px;
+      z-index: 60;
+    }
+    .nav {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 3px;
+      color: #7A7E8C;
+      font-size: 10px;
+      font-weight: 800;
+      cursor: pointer;
+      position: relative;
+    }
+    .nav.active { color: var(--orange); }
+    .nav.center span {
+      margin-top: -24px;
+      width: 52px;
+      height: 52px;
+      display: grid;
+      place-items: center;
+      border-radius: 50%;
+      color: #fff;
+      font-size: 18px;
+      background: linear-gradient(135deg, var(--blue), var(--bright-blue));
+      box-shadow: 0 8px 18px rgba(26,46,92,0.3);
+      border: 4px solid #fff;
+    }
+    .cart-badge-count {
+      position: absolute;
+      top: 8px;
+      right: 18px;
+      background: var(--orange);
+      color: #fff;
+      font-size: 9px;
+      font-weight: 900;
+      border-radius: 999px;
+      padding: 1px 5px;
+      display: none;
+    }
+    .cart-badge-count.show { display: inline-block; }
+
+    /* Cart Drawer Modal */
+    .cart-drawer {
+      position: absolute;
+      inset: 0;
+      background: rgba(0,0,0,0.5);
+      z-index: 90;
+      display: none;
+      backdrop-filter: blur(2px);
+      border-radius: 36px;
+    }
+    .cart-drawer.open { display: block; }
+    .cart-sheet {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: #fff;
+      border-radius: 24px 24px 36px 36px;
+      padding: 20px;
+      max-height: 80%;
+      display: flex;
+      flex-direction: column;
+    }
+    .cart-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 14px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid #E2E8F0;
+    }
+    .cart-items {
+      flex: 1;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+    .cart-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: #F8FAFC;
+      padding: 8px 12px;
+      border-radius: 12px;
+      font-size: 12px;
+    }
+    .cart-checkout-btn {
+      width: 100%;
+      background: linear-gradient(135deg, #FF8A3D 0%, #E94B3C 100%);
+      color: #fff;
+      border: 0;
+      border-radius: 12px;
+      padding: 12px;
+      font-weight: 900;
+      font-size: 14px;
+      cursor: pointer;
+    }
+
+    /* Notification Toast */
+    .toast-mini {
+      position: absolute;
+      top: 100px;
+      left: 50%;
+      transform: translateX(-50%) translateY(-10px);
+      background: rgba(15, 23, 42, 0.95);
+      color: #fff;
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 700;
+      opacity: 0;
+      pointer-events: none;
+      transition: all 0.25s;
+      z-index: 100;
+      white-space: nowrap;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+    }
+    .toast-mini.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+  </style>
+</head>
+<body>
+  <div class="device-container">
+    <a href="/" class="portal-back-btn">← Back to Workspace Portal</a>
+    
+    <!-- Phone top notch -->
+    <div class="device-notch">
+      <div class="notch-speaker"></div>
+      <div class="notch-camera"></div>
+    </div>
+
+    <!-- Phone Screen -->
+    <div class="phone">
+      <header>
+        <div class="status-strip-dummy"></div>
+        <div class="brand">
+          <div class="logo">Vypar<span>Hub</span></div>
+          <div class="wallet-badge" id="walletBadge">₹2,500 Credit</div>
+          <div class="avatar">R</div>
+        </div>
+        <div class="delivery-strip">
+          <span>⚡ Delhi NCR · Delivery in 2 hours</span>
+          <span class="lang-pill">EN / HI</span>
+        </div>
+      </header>
+
+      <div class="search-wrap">
+        <span>🔎</span>
+        <input id="searchInput" placeholder='Search "Coca Cola", "Maggi", "Atta"...' />
+        <button class="mic-btn" title="Voice Search">🎙</button>
+      </div>
+
+      <div class="hero">
+        <div class="eyebrow">Express Kirana Delivery</div>
+        <h1>Delivery in 2 hours</h1>
+        <p>Direct from wholesale hub to your shop counter</p>
+        <div class="hero-imgs">
+          <img src="/mobile/assets/images/products/coca-cola.jpg" onerror="this.src='../mobile/assets/images/products/coca-cola.jpg'">
+          <img src="/mobile/assets/images/products/lays.jpg" onerror="this.src='../mobile/assets/images/products/lays.jpg'">
+          <img src="/mobile/assets/images/products/parle-g.jpg" onerror="this.src='../mobile/assets/images/products/parle-g.jpg'">
+        </div>
+      </div>
+
+      <section>
+        <div class="section-head">
+          <h2>Top Trending Categories</h2>
+          <a onclick="showAll()">All →</a>
+        </div>
+        <div class="cats" id="cats"></div>
+      </section>
+
+      <section>
+        <div class="tiles" id="tiles"></div>
+      </section>
+
+      <div class="promo">
+        <div class="eyebrow">Har Meal Ka Saathi</div>
+        <h2>UPTO 40% OFF</h2>
+        <p>On masala, sauces & instant food items</p>
+        <img src="/mobile/assets/images/products/maggi.jpg" onerror="this.src='../mobile/assets/images/products/maggi.jpg'">
+      </div>
+
+      <section>
+        <div class="section-head">
+          <h2>Fresh Deals</h2>
+          <a onclick="showAll()">View all →</a>
+        </div>
+        <div class="scroller" id="products"></div>
+      </section>
+
+      <section>
+        <div class="section-head">
+          <h2>High Margin Best Sellers</h2>
+          <a onclick="showAll()">View all →</a>
+        </div>
+        <div class="scroller" id="best"></div>
+      </section>
+
+      <!-- Cart Drawer -->
+      <div class="cart-drawer" id="cartDrawer">
+        <div class="cart-sheet">
+          <div class="cart-head">
+            <h3 style="font-size:16px; font-weight:900;">Kirana Cart (<span id="cartCountTitle">0</span> items)</h3>
+            <button onclick="toggleCart()" style="background:none;border:none;font-size:18px;cursor:pointer;">✕</button>
+          </div>
+          <div class="cart-items" id="cartItemsList">
+            <p style="color:#94A3B8;font-size:12px;text-align:center;padding:20px;">Your cart is empty. Add products to get started.</p>
+          </div>
+          <div style="padding-top:10px;border-top:1px solid #E2E8F0;margin-bottom:12px;">
+            <div style="display:flex;justify-content:space-between;font-weight:900;font-size:15px;">
+              <span>Total Payable:</span>
+              <span id="cartTotalSum">₹0</span>
+            </div>
+            <div style="font-size:11px;color:var(--bright-blue);font-weight:700;margin-top:2px;">
+              Estimated Shop Margin: <span id="cartMarginSum">₹0</span>
+            </div>
+          </div>
+          <button class="cart-checkout-btn" onclick="alert('Order placed successfully in Demo Mode! ⚡ Deliver in 2 hours.')">Proceed to Checkout →</button>
+        </div>
+      </div>
+
+      <!-- Toast Feedback -->
+      <div class="toast-mini" id="miniToast">Added to cart!</div>
+
+      <!-- Bottom Nav -->
+      <nav class="bottom">
+        <div class="nav active" onclick="navTab(this, 'home')">
+          <span style="font-size:16px;">⌂</span>
+          <span>Home</span>
+        </div>
+        <div class="nav" onclick="navTab(this, 'category')">
+          <span style="font-size:16px;">▦</span>
+          <span>Category</span>
+        </div>
+        <div class="nav center" onclick="alert('VyparHub AI Stock Helper: Kirana recommendation model ready!')">
+          <span>✦</span>
+          <span>AI</span>
+        </div>
+        <div class="nav" onclick="navTab(this, 'offers')">
+          <span style="font-size:16px;">🏷</span>
+          <span>Offers</span>
+        </div>
+        <div class="nav" onclick="toggleCart()">
+          <span style="font-size:16px;">🛒</span>
+          <span>Cart</span>
+          <span class="cart-badge-count" id="cartBadgeCount">0</span>
+        </div>
+      </nav>
+    </div>
+  </div>
+
+  <script>
+    const img = p => `/mobile/assets/images/${p}`;
+    const fallbackImg = p => `../mobile/assets/images/${p}`;
+
+    const cats = [
+      ['Cold Drinks','products/coca-cola.jpg','#FFE9D6'],
+      ['Chips & Snacks','products/lays.jpg','#FFF1D6'],
+      ['Biscuits','products/parle-g.jpg','#FFF4DC'],
+      ['Instant Food','products/maggi.jpg','#FFE3CF'],
+      ['Hair Care','products/clinic-plus-sachet.jpg','#FCD9E5'],
+      ['Personal Care','products/colgate.jpg','#FDE2EC'],
+      ['Home Care','products/surf-excel.jpg','#DDEBFF'],
+      ['Atta & Dal','products/aashirvaad.jpg','#FBE7D2']
+    ];
+
+    const rawProducts = [
+      { id: '1', name: 'Coca Cola', size: '750ml', pack: 'Pack of 24', img: 'products/coca-cola.jpg', mrp: 960, buy: 768 },
+      { id: '2', name: 'Lays Classic', size: '52g', pack: 'Pack of 30', img: 'products/lays.jpg', mrp: 600, buy: 450 },
+      { id: '3', name: 'Parle-G', size: '100g', pack: 'Pack of 48', img: 'products/parle-g.jpg', mrp: 480, buy: 384 },
+      { id: '4', name: 'Maggi 2-Min Noodles', size: '70g', pack: 'Pack of 48', img: 'products/maggi.jpg', mrp: 720, buy: 576 },
+      { id: '5', name: 'Clinic Plus Sachet', size: 'Sachet 5ml', pack: 'Pack of 16', img: 'products/clinic-plus-sachet.jpg', mrp: 80, buy: 60 },
+      { id: '6', name: 'Aashirvaad Atta', size: '5kg', pack: 'Pack of 4', img: 'products/aashirvaad.jpg', mrp: 1080, buy: 928 },
+      { id: '7', name: 'Surf Excel', size: '1kg', pack: 'Pack of 4', img: 'products/surf-excel.jpg', mrp: 720, buy: 608 },
+      { id: '8', name: 'Amul Butter', size: '100g', pack: 'Pack of 20', img: 'products/amul-butter.jpg', mrp: 1120, buy: 960 },
+      { id: '9', name: 'Colgate Strong Teeth', size: '150g', pack: 'Pack of 12', img: 'products/colgate.jpg', mrp: 780, buy: 624 }
+    ];
+
+    const cart = {};
+
+    // Render Categories
+    cats.forEach(c => {
+      document.querySelector('#cats').insertAdjacentHTML('beforeend', `
+        <div class="cat" onclick="filterCategory('${c[0]}')">
+          <div class="cat-img" style="background:${c[2]}">
+            <img src="${img(c[1])}" onerror="this.src='${fallbackImg(c[1])}'">
+          </div>
+          ${c[0]}
+        </div>
+      `);
+    });
+
+    // Render Tiles
+    const tileData = [
+      ['Best Sellers', 'In Demand', '#FF5E62'],
+      ['Best Margins', 'High Margin', '#16A34A'],
+      ['Top FMCG', 'Top Brands', '#2E5BFF']
+    ];
+    tileData.forEach(t => {
+      document.querySelector('#tiles').insertAdjacentHTML('beforeend', `
+        <div class="tile" onclick="showToast('Filtered: ${t[0]}')">
+          <div class="tile-top" style="background:${t[2]}">${t[0]}</div>
+          <h3>${t[1]}</h3>
+          <div class="tile-grid">
+            ${rawProducts.slice(0,4).map(p=>`<img src="${img(p.img)}" onerror="this.src='${fallbackImg(p.img)}'">`).join('')}
+          </div>
+        </div>
+      `);
+    });
+
+    function card(p) {
+      const off = Math.round(((p.mrp - p.buy) / p.mrp) * 100);
+      const inCart = cart[p.id] ? 'in-cart' : '';
+      const btnText = cart[p.id] ? `In Cart (${cart[p.id]})` : '+ Add to Cart';
+
+      return `
+        <div class="card" id="card-${p.id}">
+          <div class="pic">
+            <img src="${img(p.img)}" onerror="this.src='${fallbackImg(p.img)}'">
+            <span class="tag left">₹${Math.round(p.mrp / 12)}/pc</span>
+            <span class="tag right">${off}% OFF</span>
+            <div class="pack">${p.pack.toUpperCase()}</div>
+          </div>
+          <div class="card-body">
+            <span class="delivery">⚡ 2 hours</span>
+            <div class="pname">${p.name}</div>
+            <div class="price">
+              <strong>₹${p.buy}</strong> <s>₹${p.mrp}</s>
+              <div class="margin">Total Margin ₹${p.mrp - p.buy}</div>
+            </div>
+            <button class="add-btn ${inCart}" onclick="addToCart('${p.id}')">${btnText}</button>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderProducts(items) {
+      const target = items || rawProducts;
+      document.querySelector('#products').innerHTML = target.map(card).join('');
+      document.querySelector('#best').innerHTML = target.slice().reverse().map(card).join('');
+    }
+    renderProducts();
+
+    function addToCart(id) {
+      cart[id] = (cart[id] || 0) + 1;
+      updateCartUI();
+      renderProducts();
+      const p = rawProducts.find(x => x.id === id);
+      showToast(`Added ${p ? p.name : 'item'} to cart!`);
+    }
+
+    function updateCartUI() {
+      let totalQty = 0;
+      let totalSum = 0;
+      let totalMargin = 0;
+      const listEl = document.getElementById('cartItemsList');
+
+      const itemIds = Object.keys(cart);
+      if (!itemIds.length) {
+        listEl.innerHTML = '<p style="color:#94A3B8;font-size:12px;text-align:center;padding:20px;">Your cart is empty.</p>';
+      } else {
+        listEl.innerHTML = itemIds.map(id => {
+          const p = rawProducts.find(x => x.id === id);
+          if (!p) return '';
+          const qty = cart[id];
+          totalQty += qty;
+          totalSum += p.buy * qty;
+          totalMargin += (p.mrp - p.buy) * qty;
+
+          return `
+            <div class="cart-row">
+              <div>
+                <strong>${p.name}</strong><br>
+                <span style="color:#64748B;font-size:11px;">₹${p.buy} x ${qty}</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:8px;">
+                <span style="font-weight:800;">₹${p.buy * qty}</span>
+                <button onclick="addToCart('${id}')" style="background:#2E5BFF;color:#fff;border:0;width:22px;height:22px;border-radius:4px;cursor:pointer;">+</button>
+              </div>
+            </div>
+          `;
+        }).join('');
+      }
+
+      document.getElementById('cartCountTitle').textContent = totalQty;
+      document.getElementById('cartTotalSum').textContent = `₹${totalSum}`;
+      document.getElementById('cartMarginSum').textContent = `₹${totalMargin}`;
+
+      const badge = document.getElementById('cartBadgeCount');
+      if (totalQty > 0) {
+        badge.textContent = totalQty;
+        badge.classList.add('show');
+      } else {
+        badge.classList.remove('show');
+      }
+    }
+
+    function toggleCart() {
+      const drawer = document.getElementById('cartDrawer');
+      drawer.classList.toggle('open');
+    }
+
+    function showToast(msg) {
+      const toast = document.getElementById('miniToast');
+      toast.textContent = msg;
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 2000);
+    }
+
+    function navTab(el, tab) {
+      document.querySelectorAll('.bottom .nav').forEach(n => n.classList.remove('active'));
+      el.classList.add('active');
+      if (tab === 'home') renderProducts();
+      else if (tab === 'offers') {
+        renderProducts(rawProducts.filter(p => (p.mrp - p.buy) > 100));
+        showToast('Showing Top Wholesale Offers');
+      } else if (tab === 'category') {
+        showToast('Browse Top Categories Above');
+      }
+    }
+
+    function filterCategory(cat) {
+      showToast(`Filter: ${cat}`);
+      renderProducts(rawProducts.slice(0, 4));
+    }
+
+    function showAll() {
+      renderProducts(rawProducts);
+      showToast('Showing All FMCG Products');
+    }
+
+    // Search filter
+    document.getElementById('searchInput').addEventListener('input', (e) => {
+      const q = e.target.value.toLowerCase().trim();
+      if (!q) return renderProducts();
+      const filtered = rawProducts.filter(p => p.name.toLowerCase().includes(q) || p.pack.toLowerCase().includes(q));
+      renderProducts(filtered);
+    });
+  </script>
+</body>
+</html>

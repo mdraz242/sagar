@@ -1,0 +1,8 @@
+firebase-service-account*.json
+.env
+.env.*
+!.env.example
+*.log
+device-server.pid
+admin-dev.pid
+uploads/

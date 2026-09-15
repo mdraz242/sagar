@@ -1,0 +1,326 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>VyparHub Invoice</title>
+  <style>
+    :root {
+      --blue: #022ea7;
+      --orange: #fe8501;
+      --red: #fb3a02;
+      --ink: #0c0728;
+      --muted: #656b93;
+      --line: #e8edf6;
+      --bg: #f7f9fc;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--ink);
+      background: var(--bg);
+    }
+    .toolbar {
+      position: sticky;
+      top: 0;
+      z-index: 2;
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      padding: 14px 22px;
+      background: #fff;
+      border-bottom: 1px solid var(--line);
+    }
+    button {
+      border: 0;
+      border-radius: 12px;
+      padding: 11px 18px;
+      font: inherit;
+      font-weight: 800;
+      cursor: pointer;
+    }
+    .primary { background: linear-gradient(135deg, var(--blue), #3157ff); color: #fff; }
+    .ghost { background: #fff; border: 1px solid var(--line); color: var(--ink); }
+    .invoice {
+      width: min(920px, calc(100% - 32px));
+      margin: 24px auto;
+      padding: 34px;
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      box-shadow: 0 18px 44px rgba(12, 7, 40, .08);
+    }
+    .top {
+      display: grid;
+      grid-template-columns: 1.4fr .9fr;
+      gap: 26px;
+      align-items: start;
+      padding-bottom: 24px;
+      border-bottom: 2px solid var(--line);
+    }
+    .brand {
+      margin: 0;
+      font-size: 32px;
+      letter-spacing: -.04em;
+      color: var(--blue);
+    }
+    .brand b { color: var(--orange); }
+    .muted { color: var(--muted); }
+    .meta {
+      display: grid;
+      gap: 7px;
+      text-align: right;
+    }
+    .badge {
+      display: inline-flex;
+      justify-self: end;
+      width: fit-content;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: #fff2e6;
+      color: var(--red);
+      font-weight: 900;
+      text-transform: uppercase;
+      font-size: 12px;
+    }
+    .section {
+      margin-top: 24px;
+    }
+    .two {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 18px;
+    }
+    .box {
+      min-height: 138px;
+      padding: 18px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: #fbfcff;
+    }
+    h2 {
+      margin: 0 0 10px;
+      font-size: 15px;
+      color: var(--blue);
+      text-transform: uppercase;
+      letter-spacing: .04em;
+    }
+    p { margin: 5px 0; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+    }
+    th, td {
+      padding: 13px 12px;
+      border-bottom: 1px solid var(--line);
+      text-align: left;
+      vertical-align: top;
+    }
+    th {
+      background: #f4f7ff;
+      color: var(--blue);
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+    }
+    td.num, th.num { text-align: right; }
+    tr:last-child td { border-bottom: 0; }
+    .summary {
+      display: grid;
+      gap: 8px;
+      margin-left: auto;
+      width: min(360px, 100%);
+      padding: 18px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: #fff;
+    }
+    .summary-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 18px;
+    }
+    .grand {
+      margin-top: 8px;
+      padding-top: 12px;
+      border-top: 2px solid var(--line);
+      font-size: 20px;
+      font-weight: 950;
+      color: var(--blue);
+    }
+    .footer {
+      margin-top: 28px;
+      padding-top: 18px;
+      border-top: 1px solid var(--line);
+      text-align: center;
+      color: var(--muted);
+    }
+    .error {
+      width: min(720px, calc(100% - 32px));
+      margin: 60px auto;
+      padding: 28px;
+      background: #fff3f0;
+      color: var(--red);
+      border: 1px solid #ffd4ca;
+      border-radius: 16px;
+    }
+    @media print {
+      body { background: #fff; }
+      .toolbar { display: none !important; }
+      .invoice {
+        width: 100%;
+        margin: 0;
+        padding: 0;
+        border: 0;
+        border-radius: 0;
+        box-shadow: none;
+      }
+      .box, table, .summary { break-inside: avoid; }
+    }
+    @media (max-width: 720px) {
+      .top, .two { grid-template-columns: 1fr; }
+      .meta { text-align: left; }
+      .badge { justify-self: start; }
+      .invoice { padding: 22px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="toolbar">
+    <button class="ghost" onclick="window.close()">Close</button>
+    <button class="primary" onclick="window.print()">Print / Save PDF</button>
+  </div>
+  <main id="root" class="invoice">
+    <p class="muted">Loading invoice...</p>
+  </main>
+  <script>
+    const API = `${location.origin}/api`;
+    const params = new URLSearchParams(location.search);
+    const orderId = params.get('orderId');
+    const token = localStorage.getItem('vyparhub_admin_access_token') || '';
+    const esc = (value) => String(value ?? '').replace(/[&<>"']/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
+    const money = (value) => `₹${Number(value || 0).toLocaleString('en-IN')}`;
+    const date = (value) => value ? new Date(value).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' }) : '-';
+    const shortId = (id) => String(id || '').slice(0, 8).toUpperCase();
+    const normalized = (order) => {
+      const items = Array.isArray(order.items) ? order.items : [];
+      const total = Number(order.total || order.total_amount || order.grand_total || 0);
+      const delivery = Number(order.delivery_charge || order.delivery_charges || 0);
+      const discount = Number(order.discount || order.discount_amount || 0);
+      const subtotal = items.reduce((sum, item) => {
+        const qty = Number(item.quantity || item.qty || 1);
+        const unit = Number(item.buyPrice || item.buy_price || item.price || item.unit_price || item.selling_price || 0);
+        return sum + unit * qty;
+      }, 0) || Math.max(total - delivery + discount, 0);
+      return { items, subtotal, delivery, discount, total: total || subtotal + delivery - discount };
+    };
+    async function fetchOrder() {
+      if (!orderId) throw new Error('Missing order ID.');
+      const cached = sessionStorage.getItem(`vyparhub_invoice_order_${orderId}`);
+      try {
+        const response = await fetch(`${API}/admin/orders/${encodeURIComponent(orderId)}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (!response.ok) throw new Error(`Invoice fetch failed (${response.status}).`);
+        const payload = await response.json();
+        return payload.data?.order || payload.data || payload.order || payload;
+      } catch (error) {
+        if (cached) return JSON.parse(cached);
+        throw error;
+      }
+    }
+    function customerBlock(order) {
+      const address = order.delivery_address || order.address || {};
+      const parts = [
+        address.line1,
+        address.area,
+        address.city,
+        address.state,
+        address.pincode,
+      ].filter(Boolean);
+      return `
+        <p><b>${esc(order.customer || order.customer_name || order.name || 'Customer')}</b></p>
+        <p>${esc(order.phone || order.customer_phone || address.phone || '-')}</p>
+        <p>${esc(parts.join(', ') || order.delivery_address_text || '-')}</p>
+      `;
+    }
+    function render(order) {
+      const totals = normalized(order);
+      const status = String(order.status || '').toLowerCase();
+      document.title = `Invoice INV-${shortId(order.id || orderId)}`;
+      document.getElementById('root').innerHTML = `
+        <section class="top">
+          <div>
+            <h1 class="brand">Vypar<b>Hub</b></h1>
+            <p><b>Makers seh Market tak</b></p>
+            <p class="muted">VyparHub Technologies Private Limited</p>
+            <p class="muted">Siwan, Bihar, India</p>
+            <p class="muted">Support: support@vyparhub.com</p>
+          </div>
+          <div class="meta">
+            ${status === 'cancelled' ? '<span class="badge">Cancelled</span>' : ''}
+            <p><b>Invoice:</b> INV-${shortId(order.id || orderId)}</p>
+            <p><b>Invoice Date:</b> ${date(new Date().toISOString())}</p>
+            <p><b>Order Date:</b> ${date(order.created_at || order.createdAt)}</p>
+            <p><b>Order:</b> #${shortId(order.id || orderId)}</p>
+          </div>
+        </section>
+        <section class="section two">
+          <div class="box">
+            <h2>Bill To</h2>
+            ${customerBlock(order)}
+          </div>
+          <div class="box">
+            <h2>Payment</h2>
+            <p><b>Method:</b> ${esc(order.payment_method || order.payment_type || order.payment_mode || 'COD')}</p>
+            <p><b>Status:</b> ${esc(order.payment_status || (order.paid ? 'Paid' : 'Pending / COD'))}</p>
+            <p><b>Order Status:</b> ${esc(status.replaceAll('_', ' ') || '-')}</p>
+          </div>
+        </section>
+        <section class="section">
+          <h2>Items</h2>
+          <table>
+            <thead><tr><th>Product</th><th class="num">Qty</th><th class="num">Unit Price</th><th class="num">Line Total</th></tr></thead>
+            <tbody>
+              ${totals.items.length ? totals.items.map((item) => {
+                const product = item.product || {};
+                const qty = Number(item.quantity || item.qty || 1);
+                const unit = Number(item.buyPrice ?? item.buy_price ?? item.price ?? item.unit_price ?? item.selling_price ?? 0);
+                const name = product.name || item.name || item.name_en || item.product_name || 'Item';
+                const metaParts = [
+                  product.sku ? `SKU: ${product.sku}` : '',
+                  product.pack ? `Pack of ${product.pack}` : '',
+                  product.size || '',
+                ].filter(Boolean);
+                return `<tr>
+                  <td><div>${esc(name)}</div>${metaParts.length ? `<div class="muted" style="font-size:11px;margin-top:3px">${esc(metaParts.join(' · '))}</div>` : ''}</td>
+                  <td class="num">${qty}</td>
+                  <td class="num">${money(unit)}</td>
+                  <td class="num">${money(unit * qty)}</td>
+                </tr>`;
+              }).join('') : '<tr><td colspan="4">Order item snapshots unavailable.</td></tr>'}
+            </tbody>
+          </table>
+        </section>
+        <section class="section">
+          <div class="summary">
+            <div class="summary-row"><span>Subtotal</span><b>${money(totals.subtotal)}</b></div>
+            <div class="summary-row"><span>Delivery Charge</span><b>${totals.delivery ? money(totals.delivery) : 'FREE'}</b></div>
+            <div class="summary-row"><span>Discount / Tax</span><b>${totals.discount ? `-${money(totals.discount)}` : money(0)}</b></div>
+            <div class="summary-row grand"><span>Grand Total</span><span>${money(totals.total)}</span></div>
+          </div>
+        </section>
+        <p class="footer">Thank you for ordering with VyparHub. For support, contact support@vyparhub.com.</p>
+      `;
+    }
+    fetchOrder().then(render).catch((error) => {
+      document.getElementById('root').className = 'error';
+      document.getElementById('root').innerHTML = `<b>Unable to load invoice.</b><p>${esc(error.message)}</p>`;
+    });
+  </script>
+</body>
+</html>

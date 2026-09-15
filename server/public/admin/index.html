@@ -1,0 +1,2886 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>VyparHub Admin</title>
+  <meta name="theme-color" content="#071a3d" />
+  <meta name="description" content="VyparHub internal admin portal for orders, products, categories, customers and reports." />
+  <link rel="manifest" href="/admin/manifest.webmanifest" />
+  <link rel="apple-touch-icon" href="/admin/icons/admin-icon.png" />
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+  <style>
+    :root {
+      --navy: #071a3d;
+      --blue: #022ea7;
+      --orange: #fe8501;
+      --red: #fb3a02;
+      --ink: #0c0728;
+      --muted: #656b93;
+      --bg: #f7f9fc;
+      --line: #e8edf6;
+      --green: #1daa61;
+      --cream: #f8dfc7;
+      --shadow: 0 14px 38px rgba(12, 7, 40, .08);
+      --radius: 14px;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--ink);
+      background: var(--bg);
+    }
+    button, input, select, textarea { font: inherit; }
+    button { cursor: pointer; }
+    .hidden { display: none !important; }
+    .login-wrap {
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 24px;
+      background:
+        radial-gradient(circle at 15% 20%, rgba(254, 133, 1, .16), transparent 30%),
+        radial-gradient(circle at 80% 0%, rgba(2, 46, 167, .14), transparent 32%),
+        #fff;
+    }
+    .login-card {
+      width: min(460px, 100%);
+      padding: 34px;
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 22px;
+      box-shadow: var(--shadow);
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 950;
+      letter-spacing: -.04em;
+    }
+    .brand-mark {
+      display: grid;
+      place-items: center;
+      width: 38px;
+      height: 38px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, var(--blue), #3157ff);
+      color: #fff;
+      font-size: 22px;
+    }
+    .brand span { color: var(--blue); }
+    .brand b { color: var(--orange); }
+    .login-card h1 { margin: 28px 0 8px; font-size: 30px; }
+    .muted { color: var(--muted); }
+    label {
+      display: grid;
+      gap: 7px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 850;
+      text-transform: uppercase;
+    }
+    input, select, textarea {
+      width: 100%;
+      min-height: 42px;
+      padding: 10px 12px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      color: var(--ink);
+      background: #fff;
+      outline: none;
+    }
+    textarea { min-height: 84px; resize: vertical; }
+    input:focus, select:focus, textarea:focus {
+      border-color: #8fa0d7;
+      box-shadow: 0 0 0 4px rgba(143, 160, 215, .18);
+    }
+    input.invalid, select.invalid, textarea.invalid {
+      border-color: var(--red);
+      box-shadow: 0 0 0 4px rgba(251, 58, 2, .12);
+    }
+    .form-error {
+      display: block;
+      margin-top: 4px;
+      color: var(--red);
+      font-size: 11px;
+      font-weight: 800;
+      text-transform: none;
+    }
+    .form-alert {
+      padding: 10px 12px;
+      border: 1px solid #ffd8cf;
+      border-radius: 12px;
+      color: var(--red);
+      background: #fff2ef;
+      font-size: 13px;
+      font-weight: 850;
+      text-transform: none;
+    }
+    .btn {
+      min-height: 40px;
+      padding: 10px 14px;
+      border: 1px solid transparent;
+      border-radius: 10px;
+      background: #f3f6ff;
+      color: var(--blue);
+      font-weight: 900;
+    }
+    .btn.primary { background: linear-gradient(135deg, var(--blue), #3157ff); color: #fff; }
+    .btn.orange { background: linear-gradient(135deg, var(--orange), var(--red)); color: #fff; }
+    .btn.ghost { background: #fff; border-color: var(--line); color: var(--ink); }
+    .btn.danger { background: #fff2ef; color: var(--red); border-color: #ffd8cf; }
+    .btn:disabled { cursor: not-allowed; opacity: .58; }
+    .msg { min-height: 22px; color: var(--red); font-weight: 750; }
+    .import-drop {
+      display: grid;
+      gap: 10px;
+      padding: 18px;
+      border: 1px dashed #b9c4dc;
+      border-radius: 16px;
+      background: #f8fbff;
+    }
+    .import-drop strong { color: var(--ink); font-size: 15px; }
+    .import-preview-table {
+      max-height: 260px;
+      overflow: auto;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: #fff;
+    }
+    .import-preview-table table { margin: 0; box-shadow: none; border: 0; }
+    .import-preview-table th, .import-preview-table td { padding: 9px 10px; font-size: 12px; }
+    .toast {
+      position: fixed;
+      right: 18px;
+      bottom: 18px;
+      z-index: 50;
+      display: none;
+      max-width: 340px;
+      padding: 13px 16px;
+      border-radius: 14px;
+      color: #fff;
+      background: linear-gradient(135deg, var(--orange), var(--red));
+      box-shadow: var(--shadow);
+      font-weight: 850;
+    }
+    .toast.open { display: block; }
+    .shell {
+      min-height: 100vh;
+      display: grid;
+      grid-template-columns: 224px minmax(0, 1fr);
+    }
+    aside {
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      padding: 16px 12px;
+      color: #dce6ff;
+      background: linear-gradient(180deg, #071a3d, #02112d);
+      overflow-y: auto;
+    }
+    .side-brand {
+      padding: 8px 8px 18px;
+      font-size: 18px;
+    }
+    .nav button {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      width: 100%;
+      margin-bottom: 5px;
+      padding: 10px 12px;
+      border: 0;
+      border-radius: 9px;
+      background: transparent;
+      color: #dce6ff;
+      text-align: left;
+      font-weight: 750;
+    }
+    .nav button.active { background: #244fcf; color: #fff; }
+    main { min-width: 0; }
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 5;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      min-height: 66px;
+      padding: 14px 24px;
+      background: rgba(255, 255, 255, .94);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--line);
+    }
+    .hamb { width: 34px; height: 34px; border: 0; background: #f4f6fb; border-radius: 9px; }
+    .search {
+      max-width: 460px;
+      flex: 1;
+      position: relative;
+    }
+    .search-results {
+      position: absolute;
+      top: 48px;
+      left: 0;
+      right: 0;
+      z-index: 8;
+      display: none;
+      padding: 10px;
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      box-shadow: var(--shadow);
+    }
+    .search-results.open { display: grid; gap: 8px; }
+    .search-hit { display: block; width: 100%; padding: 8px 10px; border: 0; border-radius: 10px; background: #f8faff; color: var(--ink); font: inherit; font-size: 13px; text-align: left; cursor: pointer; }
+    .search-hit:hover { background: #eef4ff; }
+    .search input { padding-left: 38px; }
+    .search:before {
+      content: "⌕";
+      position: absolute;
+      left: 14px;
+      top: 9px;
+      color: var(--muted);
+      font-size: 18px;
+      z-index: 1;
+    }
+    .avatar {
+      width: 34px;
+      height: 34px;
+      border-radius: 999px;
+      display: grid;
+      place-items: center;
+      color: #fff;
+      background: linear-gradient(135deg, var(--orange), var(--red));
+      font-weight: 950;
+    }
+    .content { padding: 22px 24px 40px; }
+    .section { display: none; }
+    .section.active { display: block; }
+    .title-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      margin-bottom: 16px;
+    }
+    h1, h2, h3 { margin: 0; }
+    h1 { font-size: 22px; }
+    .grid { display: grid; gap: 16px; }
+    .stats { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    .card {
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+    .stat { padding: 16px; }
+    .stat p { margin: 0 0 10px; color: var(--muted); font-size: 12px; font-weight: 850; }
+    .stat strong { display: block; font-size: 24px; color: var(--navy); }
+    .stat small { color: var(--green); font-weight: 850; }
+    .panel { padding: 16px; }
+    .two-col { grid-template-columns: minmax(0, 1.25fr) minmax(320px, .75fr); }
+    .load-warning {
+      padding: 12px 14px;
+      margin-bottom: 16px;
+      border: 1px solid #ffd8cf;
+      border-radius: 12px;
+      color: var(--red);
+      background: #fff2ef;
+      font-weight: 800;
+    }
+    .pick-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 10px;
+      max-height: 270px;
+      overflow: auto;
+      padding: 8px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: #fbfcff;
+    }
+    .pick-grid label {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-height: 52px;
+      padding: 8px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: #fff;
+      color: var(--ink);
+      text-transform: none;
+      font-size: 13px;
+    }
+    .pick-grid input { width: auto; min-height: auto; }
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; min-width: 720px; }
+    th, td {
+      padding: 13px 12px;
+      border-bottom: 1px solid var(--line);
+      text-align: left;
+      font-size: 13px;
+      vertical-align: middle;
+    }
+    th { color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: .02em; }
+    tbody tr:hover { background: #fbfcff; }
+    .thumb { width: 36px; height: 44px; object-fit: contain; background: #f8f9fd; border-radius: 8px; }
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 4px 9px;
+      border-radius: 999px;
+      color: var(--green);
+      background: rgba(29, 170, 97, .1);
+      font-size: 11px;
+      font-weight: 900;
+    }
+    .pill.warn { color: #b45309; background: #fff7ed; }
+    .pill.bad { color: var(--red); background: #fff2ef; }
+    .actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .order-stepper { display: grid; gap: 12px; margin: 8px 0 16px; }
+    .order-step {
+      display: grid;
+      grid-template-columns: 28px 1fr auto;
+      gap: 10px;
+      align-items: center;
+      padding: 10px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: #fff;
+    }
+    .order-step.done { border-color: #bbf7d0; background: #f0fdf4; }
+    .order-step.current { border-color: var(--blue); background: #eef4ff; }
+    .order-step.next { border-color: #fed7aa; background: #fff7ed; }
+    .step-dot {
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: #eef2ff;
+      color: var(--muted);
+      font-weight: 900;
+    }
+    .order-step.done .step-dot { background: #16a34a; color: #fff; }
+    .order-step.current .step-dot { background: var(--blue); color: #fff; }
+    .order-step.next .step-dot { background: linear-gradient(135deg, var(--orange), var(--red)); color: #fff; }
+    .step-title { font-weight: 900; color: var(--ink); text-transform: capitalize; }
+    .step-meta { font-size: 12px; color: var(--muted); }
+    .order-progress {
+      display: flex;
+      align-items: flex-start;
+      gap: 0;
+      margin: 4px 0 20px;
+      overflow-x: auto;
+      padding-bottom: 4px;
+    }
+    .order-progress-step {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      min-width: 100px;
+    }
+    .order-progress-step .progress-dot {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: #eef2ff;
+      color: var(--muted);
+      font-weight: 900;
+      font-size: 13px;
+      border: 2px solid var(--line);
+    }
+    .order-progress-step.done .progress-dot { background: #16a34a; border-color: #16a34a; color: #fff; }
+    .order-progress-step.current .progress-dot { background: var(--blue); border-color: var(--blue); color: #fff; }
+    .order-progress-step .progress-label { font-weight: 850; font-size: 13px; margin-top: 6px; text-transform: capitalize; }
+    .order-progress-step .progress-meta { font-size: 11px; color: var(--muted); margin-top: 2px; }
+    .order-progress-line {
+      flex: 1;
+      height: 2px;
+      background: var(--line);
+      margin-top: 15px;
+      min-width: 20px;
+    }
+    .order-progress-line.done { background: #16a34a; }
+    .detail-card h2 {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 15px;
+      margin: 0 0 12px;
+    }
+    .detail-card .kv { display: flex; justify-content: space-between; gap: 10px; padding: 6px 0; border-bottom: 1px dashed var(--line); font-size: 13px; }
+    .detail-card .kv:last-child { border-bottom: 0; }
+    .detail-card .kv span:first-child { color: var(--muted); }
+    .item-detail-row { display: flex; align-items: center; gap: 10px; }
+    .item-detail-row .thumb { width: 40px; height: 40px; flex-shrink: 0; }
+    .item-detail-meta { font-size: 11px; color: var(--muted); line-height: 1.5; }
+    .summary-line { display: flex; justify-content: space-between; padding: 6px 0; font-size: 13px; }
+    .summary-line.grand { border-top: 1px solid var(--line); margin-top: 8px; padding-top: 10px; font-size: 15px; font-weight: 900; color: var(--navy); }
+    .paid-badge { display: inline-flex; margin-top: 10px; padding: 7px 12px; border-radius: 10px; background: #f0fdf4; color: #16a34a; font-weight: 850; font-size: 12px; }
+    .next-action-card { background: #fff7ed; border: 1px solid #fed7aa; border-radius: 14px; padding: 16px; height: 100%; }
+    .next-action-card p { font-size: 13px; color: var(--ink); margin: 0 0 12px; }
+    .next-action-card .btn { width: 100%; }
+    .next-action-card.done-card { background: #f0fdf4; border-color: #bbf7d0; }
+    .order-timeline-item { display: flex; align-items: center; gap: 8px; padding: 6px 0; font-size: 13px; }
+    .order-timeline-item .dot { width: 18px; height: 18px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 10px; background: #eef2ff; color: var(--muted); flex-shrink: 0; }
+    .order-timeline-item.done .dot { background: #16a34a; color: #fff; }
+    .order-detail-footer { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--line); }
+    .brand-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 14px;
+    }
+    .brand-card {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      gap: 6px;
+      padding: 16px;
+    }
+    .brand-card-top { width: 100%; display: flex; justify-content: flex-start; }
+    .brand-logo { width: 56px; height: 56px; object-fit: contain; background: #f8f9fd; border-radius: 10px; }
+    .brand-card-meta { display: flex; justify-content: space-between; width: 100%; font-size: 12px; color: var(--muted); margin: 4px 0; }
+    .toolbar {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 14px;
+    }
+    .tabs { display: flex; gap: 8px; flex-wrap: wrap; }
+    .tab {
+      border: 1px solid var(--line);
+      background: #fff;
+      color: var(--muted);
+      padding: 8px 12px;
+      border-radius: 10px;
+      font-weight: 850;
+    }
+    .tab.active { color: #fff; border-color: var(--orange); background: var(--orange); }
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+    }
+    .full { grid-column: 1 / -1; }
+    .wide { grid-column: span 2; }
+    .upload-box {
+      border: 1px dashed #cfd8ef;
+      border-radius: 12px;
+      padding: 14px;
+      background: #fbfcff;
+    }
+    .preview {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-top: 10px;
+      min-height: 58px;
+    }
+    .preview img { width: 52px; height: 52px; object-fit: contain; border-radius: 10px; background: #fff; border: 1px solid var(--line); }
+    .modal {
+      position: fixed;
+      inset: 0;
+      z-index: 20;
+      display: none;
+      place-items: center;
+      padding: 20px;
+      background: rgba(2, 8, 23, .46);
+    }
+    .modal.open { display: grid; }
+    .modal-card {
+      width: min(1120px, 100%);
+      max-height: 90vh;
+      overflow: auto;
+      background: #fff;
+      border-radius: 18px;
+      box-shadow: 0 28px 80px rgba(0, 0, 0, .28);
+    }
+    .modal-head {
+      position: sticky;
+      top: 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      padding: 18px 20px;
+      background: #fff;
+      border-bottom: 1px solid var(--line);
+    }
+    .modal-body { padding: 18px 20px; }
+    .drawer-stat {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+    }
+    .product-variant-wrap {
+      margin-top: 12px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: #fff;
+    }
+    .product-variant-wrap table {
+      min-width: 1260px;
+      table-layout: fixed;
+      box-shadow: none;
+    }
+    .product-variant-wrap th,
+    .product-variant-wrap td {
+      padding: 12px 10px;
+      vertical-align: top;
+    }
+    .product-variant-wrap th:nth-child(1),
+    .product-variant-wrap td:nth-child(1) { width: 150px; }
+    .product-variant-wrap th:nth-child(2),
+    .product-variant-wrap td:nth-child(2) { width: 150px; }
+    .product-variant-wrap th:nth-child(3),
+    .product-variant-wrap td:nth-child(3) { width: 90px; }
+    .product-variant-wrap th:nth-child(4),
+    .product-variant-wrap td:nth-child(4),
+    .product-variant-wrap th:nth-child(5),
+    .product-variant-wrap td:nth-child(5),
+    .product-variant-wrap th:nth-child(6),
+    .product-variant-wrap td:nth-child(6),
+    .product-variant-wrap th:nth-child(7),
+    .product-variant-wrap td:nth-child(7) { width: 110px; }
+    .product-variant-wrap th:nth-child(8),
+    .product-variant-wrap td:nth-child(8) { width: 88px; }
+    .product-variant-wrap th:nth-child(9),
+    .product-variant-wrap td:nth-child(9) { width: 190px; }
+    .product-variant-wrap th:nth-child(10),
+    .product-variant-wrap td:nth-child(10) { width: 86px; text-align: center; }
+    .product-variant-wrap th:nth-child(11),
+    .product-variant-wrap td:nth-child(11) { width: 118px; }
+    .product-variant-wrap th:nth-child(12),
+    .product-variant-wrap td:nth-child(12) { width: 104px; }
+    .product-variant-wrap input,
+    .product-variant-wrap select {
+      min-width: 0;
+      min-height: 44px;
+      padding: 10px;
+    }
+    .product-variant-wrap input[type="checkbox"] {
+      width: 24px;
+      height: 24px;
+      min-height: 24px;
+      margin-top: 8px;
+      accent-color: #1473e6;
+    }
+    .variant-preview {
+      display: grid;
+      gap: 3px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.3;
+      white-space: normal;
+    }
+    .variant-preview b {
+      color: var(--ink);
+      font-size: 13px;
+    }
+    .mini-card {
+      padding: 14px;
+      border: 1px solid var(--line);
+      border-radius: 13px;
+      background: #fff;
+    }
+    .bar { height: 9px; border-radius: 99px; background: #edf1fb; overflow: hidden; }
+    .bar span { display: block; height: 100%; background: linear-gradient(135deg, var(--blue), #8fa0d7); }
+    .socket-state {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 7px 10px;
+      border-radius: 999px;
+      background: #eef4ff;
+      color: var(--blue);
+      font-size: 12px;
+      font-weight: 900;
+    }
+    .socket-state::before {
+      content: '';
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--green);
+      box-shadow: 0 0 0 3px rgba(29, 170, 97, .12);
+    }
+    .socket-state.reconnecting { background: #fff7ed; color: #b45309; }
+    .socket-state.reconnecting::before { background: #f59e0b; box-shadow: 0 0 0 3px rgba(245, 158, 11, .16); }
+    .socket-state.offline { background: #fff2ef; color: var(--red); }
+    .socket-state.offline::before { background: var(--red); box-shadow: 0 0 0 3px rgba(251, 58, 2, .14); }
+    @media (max-width: 960px) {
+      .shell { grid-template-columns: 1fr; }
+      aside { position: fixed; inset: 0 auto 0 0; z-index: 30; width: 240px; transform: translateX(-100%); transition: .2s ease; }
+      aside.open { transform: translateX(0); }
+      .stats, .two-col, .form-grid, .drawer-stat, .two-col-detail { grid-template-columns: 1fr; }
+      .wide { grid-column: auto; }
+      .content { padding: 16px; }
+      table { min-width: 640px; }
+      .order-progress { justify-content: flex-start; }
+      .order-detail-footer { flex-direction: column; align-items: stretch; }
+    }
+  </style>
+</head>
+<body>
+  <div id="loginView" class="login-wrap">
+    <form id="loginForm" class="login-card">
+      <div class="brand"><span class="brand-mark">V</span><span>Vypar<b>Hub</b></span></div>
+      <h1>Admin Login</h1>
+      <p class="muted">Use a super-admin or admin account to manage live mobile data.</p>
+      <div class="grid">
+        <label>Email <input id="loginEmail" value="admin@vyparhub.com" autocomplete="username" /></label>
+        <label>Password <input id="loginPassword" type="password" value="Admin@123" autocomplete="current-password" /></label>
+        <button class="btn primary" type="submit">Login</button>
+        <div id="loginMsg" class="msg"></div>
+      </div>
+    </form>
+  </div>
+
+  <div id="appView" class="shell hidden">
+    <aside id="sidebar">
+      <div class="side-brand brand"><span>Vypar<b>Hub</b> admin</span></div>
+      <nav id="nav" class="nav"></nav>
+    </aside>
+    <main>
+      <header class="topbar">
+        <button class="hamb" id="hamb">☰</button>
+        <strong id="pageTitle">Dashboard</strong>
+        <div class="search"><input id="globalSearch" placeholder="Search orders, users, products..." /><div id="searchResults" class="search-results"></div></div>
+        <button class="btn ghost" id="refreshBtn">Refresh</button>
+        <span id="socketState" class="socket-state offline">Offline</span>
+        <button class="btn primary hidden" id="installBtn">Install App</button>
+        <button class="btn ghost" onclick="setRoute('notifications')">🔔 <span id="bellCount"></span></button>
+        <div class="avatar">A</div>
+        <strong>Admin</strong>
+      </header>
+      <div class="content">
+        <section id="dashboard" class="section active"></section>
+        <section id="orders" class="section"></section>
+        <section id="products" class="section"></section>
+        <section id="brands" class="section"></section>
+        <section id="categories" class="section"></section>
+        <section id="users" class="section"></section>
+        <section id="customers" class="section"></section>
+        <section id="marketing" class="section"></section>
+        <section id="rewards" class="section"></section>
+        <section id="referrals" class="section"></section>
+        <section id="home-sections" class="section"></section>
+        <section id="delivery-zones" class="section"></section>
+        <section id="notifications" class="section"></section>
+        <section id="coupons" class="section"></section>
+        <section id="banners" class="section"></section>
+        <section id="reviews" class="section"></section>
+        <section id="returns" class="section"></section>
+        <section id="reports" class="section"></section>
+        <section id="payments" class="section"></section>
+        <section id="payouts" class="section"></section>
+        <section id="settings" class="section"></section>
+        <section id="system" class="section"></section>
+        <section id="logs" class="section"></section>
+        <section id="support" class="section"></section>
+      </div>
+    </main>
+  </div>
+
+  <div id="modal" class="modal">
+    <div class="modal-card">
+      <div class="modal-head">
+        <h2 id="modalTitle">Edit</h2>
+        <button class="btn ghost" id="modalClose">Close</button>
+      </div>
+      <div id="modalBody" class="modal-body"></div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast"></div>
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    const API = `${location.origin}/api`;
+    const imgUrl = (path) => !path ? '' : path.startsWith('http') ? path : path.startsWith('/uploads') ? `${location.origin}${path}` : `${location.origin}/${path}`;
+    const esc = (value) => String(value ?? '').replace(/[&<>"']/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
+    const money = (value) => `₹${Number(value || 0).toLocaleString('en-IN')}`;
+    const shortId = (id) => String(id || '').slice(-8).toUpperCase();
+    const date = (value) => value ? new Date(value).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' }) : 'Recent';
+    const state = {
+      token: localStorage.getItem('vyparhub_admin_access_token') || '',
+      refreshToken: localStorage.getItem('vyparhub_admin_refresh_token') || '',
+      user: JSON.parse(localStorage.getItem('vyparhub_admin_user') || 'null'),
+      route: 'dashboard',
+      dashboard: {},
+      catalogVisibility: {},
+      products: [],
+      categories: [],
+      brands: [],
+      orders: [],
+      offers: [],
+      customers: [],
+      reports: {},
+      payments: [],
+      payouts: [],
+      returns: [],
+      support: [],
+      users: [],
+      roles: [],
+      loyaltyTiers: [],
+      loyaltyRules: [],
+      loyaltyRewards: [],
+      referrals: { settings: {}, events: [] },
+      homeSections: [],
+      deliveryZones: [],
+      notificationHistory: [],
+      logs: [],
+      settings: {},
+      filter: 'All',
+      dashboardRange: localStorage.getItem('vyparhub_dashboard_range') || 'month',
+      dashboardLastUpdated: null,
+      searchResults: null,
+      socket: null,
+      socketStatus: 'offline',
+      liveNotifications: 0,
+      loadErrors: [],
+      selected: { products: new Set(), categories: new Set(), brands: new Set() },
+    };
+    const navItems = [
+      ['dashboard', '⌂', 'Dashboard'], ['orders', '▣', 'Orders'], ['products', '▤', 'Products'],
+      ['brands', '◇', 'Brands'], ['categories', '▦', 'Categories'], ['users', '♙', 'Users'], ['customers', '☻', 'Customers'], ['marketing', '↗', 'Marketing'],
+      ['rewards', '☆', 'Rewards & Wallet'], ['referrals', '⛓', 'Referrals'], ['home-sections', '▣', 'Home Sections'], ['delivery-zones', '⌖', 'Delivery Zones'], ['notifications', '◉', 'Notifications'],
+      ['coupons', '%', 'Coupons'], ['banners', '▭', 'Banners'], ['reviews', '★', 'Reviews'],
+      ['returns', '↩', 'Returns & Refunds'], ['reports', '◌', 'Reports'], ['payments', '₹', 'Payments'],
+      ['payouts', '⇄', 'Payouts'], ['settings', '⚙', 'Settings'], ['logs', '☷', 'Logs'], ['support', '?', 'Support'], ['logout', '↪', 'Logout'],
+    ];
+    const $ = (id) => document.getElementById(id);
+    const unwrap = (json) => {
+      if (!json.success) throw new Error(json.error?.message || 'Request failed');
+      return json.data;
+    };
+    function clearSession(message = '') {
+      localStorage.removeItem('vyparhub_admin_access_token');
+      localStorage.removeItem('vyparhub_admin_refresh_token');
+      localStorage.removeItem('vyparhub_admin_user');
+      state.token = '';
+      state.refreshToken = '';
+      state.user = null;
+      $('appView').classList.add('hidden');
+      $('loginView').classList.remove('hidden');
+      $('loginMsg').textContent = message;
+    }
+    async function request(path, options = {}) {
+      const headers = options.body instanceof FormData ? {} : { 'Content-Type': 'application/json' };
+      if (state.token) headers.Authorization = `Bearer ${state.token}`;
+      const res = await fetch(`${API}${path}`, { ...options, headers: { ...headers, ...(options.headers || {}) } });
+      const json = await res.json().catch(() => ({}));
+      const message = json.error?.message || `HTTP ${res.status}`;
+      const sessionFailed = (res.status === 401 || /invalid token|jwt|missing token|admin session/i.test(message)) && !path.startsWith('/admin/auth/');
+      if (sessionFailed) {
+        clearSession('Session expired. Please login again.');
+        throw new Error('Session expired. Please login again.');
+      }
+      if (!res.ok || json.success === false) {
+        const error = new Error(json.error?.message || `HTTP ${res.status}`);
+        error.details = json.error?.details || {};
+        error.status = res.status;
+        throw error;
+      }
+      return unwrap(json);
+    }
+    function statusPill(status) {
+      const s = String(status || 'active');
+      const lower = s.toLowerCase();
+      const cls = lower.includes('cancel') || lower.includes('reject') || lower.includes('blocked') ? 'bad' : lower.includes('pending') ? 'warn' : '';
+      return `<span class="pill ${cls}">${s}</span>`;
+    }
+    const slugify = (value) => String(value || '').trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+    const moduleForRoute = (route) => ({ brands: 'brands', marketing: 'marketing', system: 'settings', referrals: 'rewards', 'home-sections': 'merchandising', 'delivery-zones': 'merchandising', notifications: 'marketing' }[route] || route);
+    function can(module, action = 'view') {
+      if (!state.user) return false;
+      if (state.user.role === 'Super Admin') return true;
+      return (state.user.permissions || []).some((p) => p.module === module && p.action === action && p.allowed !== false);
+    }
+    function canRoute(route) {
+      if (route === 'logout') return true;
+      return can(moduleForRoute(route), 'view');
+    }
+    function rows(items, empty, render) {
+      return items.length ? items.map(render).join('') : `<tr><td colspan="8" class="muted">${empty}</td></tr>`;
+    }
+    function loadWarning() {
+      if (!state.loadErrors.length) return '';
+      return `<div class="load-warning">Some admin data could not load. ${state.loadErrors[0]}</div>`;
+    }
+    function renderNav() {
+      $('nav').innerHTML = navItems.filter(([id]) => canRoute(id)).map(([id, icon, label]) => `
+        <button class="${state.route === id ? 'active' : ''}" data-route="${id}">
+          <span>${icon}</span><span>${label}</span>
+        </button>`).join('');
+      document.querySelectorAll('[data-route]').forEach((btn) => btn.onclick = () => {
+        const route = btn.dataset.route;
+      if (route === 'logout') return logout();
+        if (!canRoute(route)) return alert('You do not have permission to open this page.');
+        setRoute(route);
+      });
+    }
+    function setRoute(route) {
+      if (!canRoute(route)) route = 'dashboard';
+      state.route = route;
+      state.filter = 'All';
+      document.querySelectorAll('.section').forEach((el) => el.classList.toggle('active', el.id === route));
+      $('pageTitle').textContent = navItems.find((x) => x[0] === route)?.[2] || 'Dashboard';
+      $('sidebar').classList.remove('open');
+      renderNav();
+      render();
+    }
+    function renderDashboard() {
+      const d = state.dashboard;
+      const revenue = Number(d.orders?.gross_sales ?? d.orders?.revenue ?? 0);
+      const pendingRevenue = Number(d.orders?.pending_revenue || 0);
+      const cancelledValue = Number(d.orders?.cancelled_value || 0);
+      const refundedAmount = Number(d.orders?.refunded_amount || 0);
+      const netSales = Number(d.orders?.net_sales ?? (revenue - refundedAmount));
+      const orders = Number(d.orders?.count || state.orders.length);
+      const customers = state.customers.length;
+      const profit = Number(d.products?.margin || 0);
+      const lastUpdated = state.dashboardLastUpdated || d.orders?.last_updated_at || new Date().toISOString();
+      const visibility = state.catalogVisibility || {};
+      const hiddenProducts = Number(visibility.hidden_products || 0);
+      const visibilitySamples = visibility.samples || [];
+      $('dashboard').innerHTML = `
+        <div class="title-row"><h1>Dashboard</h1><div class="actions"><span class="socket-state">Last updated ${date(lastUpdated)}</span><select id="dashboardRange" onchange="setDashboardRange(this.value)"><option value="today">Today</option><option value="week">This Week</option><option value="month">This Month</option></select><button class="btn primary" onclick="refreshDashboardOnly()">Refresh Data</button></div></div>
+        <div class="grid stats">
+          <div class="card stat"><p>Total Sales</p><strong>${money(revenue)}</strong><small>Delivered orders only</small></div>
+          <div class="card stat"><p>Net Sales</p><strong>${money(netSales)}</strong><small>Delivered minus refunds</small></div>
+          <div class="card stat"><p>Pending Revenue</p><strong>${money(pendingRevenue)}</strong><small>Placed to out-for-delivery</small></div>
+          <div class="card stat"><p>Refunded Amount</p><strong>${money(refundedAmount)}</strong><small>Approved refund liability</small></div>
+          <div class="card stat"><p>Total Orders</p><strong>${orders}</strong><small>All order statuses</small></div>
+          <div class="card stat"><p>Total Customers</p><strong>${customers}</strong><small>Registered retailers</small></div>
+          <div class="card stat"><p>Cancelled Orders</p><strong>${d.orders?.cancelled_count || 0}</strong><small>${money(cancelledValue)} not counted in sales</small></div>
+          <div class="card stat"><p>Total Margin</p><strong>${money(profit)}</strong><small>Catalog margin pool</small></div>
+        </div>
+        <div class="card panel" style="margin-top:16px">
+          <div class="title-row"><h2>Catalog Visibility</h2><span class="muted">Customer app sanity check</span></div>
+          <div class="grid stats">
+            <div class="card stat"><p>Visible Products</p><strong>${visibility.visible_products || 0}</strong><small>Returned by public catalog APIs</small></div>
+            <div class="card stat"><p>Hidden Products</p><strong>${hiddenProducts}</strong><small>${hiddenProducts ? 'Fix before importing more files' : 'Catalog is visible'}</small></div>
+            <div class="card stat"><p>Category Issues</p><strong>${visibility.category_issues || 0}</strong><small>Missing or inactive categories</small></div>
+            <div class="card stat"><p>Brand Issues</p><strong>${visibility.brand_issues || 0}</strong><small>Missing or inactive brands</small></div>
+            <div class="card stat"><p>Variant Issues</p><strong>${visibility.variant_issues || 0}</strong><small>No active pack/variant</small></div>
+          </div>
+          ${hiddenProducts ? table('Hidden Product Samples', ['Product','SKU','Reason'], rows(visibilitySamples, 'No hidden products', (p) => `<tr><td>${p.name_en || '-'}</td><td>${p.sku || '-'}</td><td>${p.reason}</td></tr>`)) : '<p class="muted">All checked products are visible to the customer app.</p>'}
+        </div>
+        <div class="grid two-col" style="margin-top:16px">
+          <div class="card panel">
+            <div class="title-row"><h2>Sales Overview</h2><span class="muted">Last 14 days</span></div>
+            <div class="grid">${(state.reports.sales || []).map((s) => `<div><div class="title-row"><b>${s.label}</b><span>${money(s.total)}</span></div><div class="bar"><span style="width:${Math.min(100, Number(s.total || 0) / Math.max(revenue, 1) * 260)}%"></span></div></div>`).join('') || '<p class="muted">No sales yet.</p>'}</div>
+          </div>
+          <div class="card panel">
+            <div class="title-row"><h2>Order Status</h2><span>${orders} total</span></div>
+            ${['placed','confirmed','packed','shipped','out_for_delivery','delivered','partially_refunded','refunded','cancelled'].map((s) => {
+              const count = state.orders.filter((o) => String(o.status).toLowerCase() === s).length;
+              return `<div class="title-row"><span>${s}</span><b>${count}</b></div><div class="bar"><span style="width:${orders ? count / orders * 100 : 0}%"></span></div>`;
+            }).join('')}
+          </div>
+        </div>
+        <div class="grid two-col" style="margin-top:16px">
+          <div class="card panel">${table('Top Selling Products', ['Product','Brand','Stock','Margin'], rows((state.reports.topProducts || state.products).slice(0,5), 'No products', (p) => `<tr><td><img class="thumb" src="${imgUrl(p.image_url)}" /> ${p.name_en || p.name}</td><td>${p.brand || '-'}</td><td>${p.stock || p.sold || 0}</td><td>${money((p.mrp || 0) - (p.buy_price || 0))}</td></tr>`))}</div>
+          <div class="card panel">${table('Recent Orders', ['Order','Customer','Amount','Status'], rows(state.orders.slice(0,6), 'No orders', (o) => `<tr><td>#${shortId(o.id)}</td><td>${o.customer || o.user_id || '-'}</td><td>${money(o.total)}</td><td>${statusPill(o.status)}</td></tr>`))}</div>
+        </div>`;
+      const rangeSelect = $('dashboardRange');
+      if (rangeSelect) rangeSelect.value = state.dashboardRange;
+    }
+    function table(title, heads, body, action = '') {
+      return `<div class="title-row"><h2>${title}</h2>${action}</div><div class="table-wrap"><table><thead><tr>${heads.map((h) => `<th>${h}</th>`).join('')}</tr></thead><tbody>${body}</tbody></table></div>`;
+    }
+    function sectionHeader(title, action = '') {
+      return `<div class="title-row"><h1>${title}</h1><div class="actions">${action}</div></div>`;
+    }
+    function resetSelection(type) {
+      state.selected[type] = new Set();
+    }
+    function selectedIds(type) {
+      return [...(state.selected[type] || new Set())];
+    }
+    function toggleSelection(type, id, checked) {
+      const set = state.selected[type] || new Set();
+      if (checked) set.add(String(id));
+      else set.delete(String(id));
+      state.selected[type] = set;
+      render();
+    }
+    function toggleAllSelection(type, ids, checked) {
+      state.selected[type] = checked ? new Set(ids.map(String)) : new Set();
+      render();
+    }
+    function bulkDeleteButton(type, endpoint, label, cascadeCopy = '') {
+      if (!can(type, 'delete')) return '';
+      const count = selectedIds(type).length;
+      return `<button class="btn danger" ${count ? '' : 'disabled'} onclick="bulkDeleteCatalog('${type}','${endpoint}','${label}','${esc(cascadeCopy)}')">Delete Selected${count ? ` (${count})` : ''}</button>`;
+    }
+    function renderOrders() {
+      const filters = ['All', 'Placed', 'Confirmed', 'Packed', 'Shipped', 'Out_for_delivery', 'Delivered', 'Partially_refunded', 'Refunded', 'Cancelled'];
+      const q = $('globalSearch')?.value?.toLowerCase() || '';
+      const data = state.orders.filter((o) => (state.filter === 'All' || String(o.status).toLowerCase() === state.filter.toLowerCase()) && JSON.stringify(o).toLowerCase().includes(q));
+      $('orders').innerHTML = sectionHeader('Orders', '<button class="btn ghost" onclick="exportCsv(\'orders\')">Export</button>') +
+        `${loadWarning()}<div class="toolbar"><div class="tabs">${filters.map((f) => `<button class="tab ${state.filter === f ? 'active' : ''}" onclick="state.filter='${f}';renderOrders()">${f}</button>`).join('')}</div><button class="btn ghost" onclick="openFilters('orders')">Filters</button></div>
+        <div class="card panel">${table('', ['Order ID','Customer','Amount','Payment','Status','Date','Action'], rows(data, 'No orders found', (o) => `
+          <tr><td><button class="btn ghost" onclick="openOrderDetail('${o.id}')">#${shortId(o.id)}</button></td><td>${o.customer || o.user_id || '-'}</td><td>${money(o.total)}</td><td>${o.payment_mode || 'COD'}</td><td>${statusPill(o.status)}</td><td>${date(o.created_at)}</td><td class="actions"><button class="btn ghost" onclick="openOrderDetail('${o.id}')">View / Update</button></td></tr>`))}</div>`;
+    }
+    function catalogStats(kind) {
+      if (kind === 'products') {
+        const list = state.products;
+        const active = list.filter((p) => p.is_active !== false).length;
+        const outOfStock = list.filter((p) => {
+          const first = (p.variants || [])[0] || {};
+          return Number(first.stock_quantity ?? p.stock ?? 0) <= 0;
+        }).length;
+        const lowStock = list.filter((p) => {
+          const first = (p.variants || [])[0] || {};
+          const stock = Number(first.stock_quantity ?? p.stock ?? 0);
+          const alert = Number(first.low_stock_alert ?? 0);
+          return stock > 0 && alert > 0 && stock <= alert;
+        }).length;
+        const totalValue = list.reduce((sum, p) => {
+          const first = (p.variants || [])[0] || {};
+          const cost = Number(first.cost_price ?? p.buy_price ?? 0);
+          const stock = Number(first.stock_quantity ?? p.stock ?? 0);
+          return sum + cost * stock;
+        }, 0);
+        return `<div class="grid stats" style="margin-bottom:16px">
+          <div class="card stat"><p>Total Products</p><strong>${list.length}</strong></div>
+          <div class="card stat"><p>Active Products</p><strong>${active}</strong><small>${list.length ? Math.round(active / list.length * 100) : 0}% of total</small></div>
+          <div class="card stat"><p>Out of Stock</p><strong>${outOfStock}</strong><small>${list.length ? Math.round(outOfStock / list.length * 100) : 0}% of total</small></div>
+          <div class="card stat"><p>Low Stock</p><strong>${lowStock}</strong><small>${list.length ? Math.round(lowStock / list.length * 100) : 0}% of total</small></div>
+          <div class="card stat"><p>Total Value</p><strong>${money(totalValue)}</strong><small>Inventory value</small></div>
+        </div>`;
+      }
+      if (kind === 'categories') {
+        const list = state.categories;
+        const active = list.filter((c) => c.is_active !== false).length;
+        const productCounts = state.products.filter((p) => p.is_active !== false).reduce((acc, p) => (acc[p.category_id] = (acc[p.category_id] || 0) + 1, acc), {});
+        const top = list.slice().sort((a, b) => (productCounts[b.id] || 0) - (productCounts[a.id] || 0))[0];
+        return `<div class="grid stats" style="margin-bottom:16px">
+          <div class="card stat"><p>Total Categories</p><strong>${list.length}</strong></div>
+          <div class="card stat"><p>Active Categories</p><strong>${active}</strong><small>${list.length ? Math.round(active / list.length * 100) : 0}% of total</small></div>
+          <div class="card stat"><p>Inactive Categories</p><strong>${list.length - active}</strong></div>
+          <div class="card stat"><p>Total Products</p><strong>${state.products.filter((p) => p.is_active !== false).length}</strong><small>Across all categories</small></div>
+          <div class="card stat"><p>Top Category</p><strong>${top?.name_en || '-'}</strong><small>${top ? `${productCounts[top.id] || 0} products` : ''}</small></div>
+        </div>`;
+      }
+      if (kind === 'brands') {
+        const list = state.brands;
+        const active = list.filter((b) => (b.status || (b.is_active ? 'active' : 'inactive')) !== 'inactive').length;
+        const productCounts = state.products.filter((p) => p.is_active !== false).reduce((acc, p) => (acc[p.brand_id] = (acc[p.brand_id] || 0) + 1, acc), {});
+        const top = list.slice().sort((a, b) => (productCounts[b.id] || 0) - (productCounts[a.id] || 0))[0];
+        return `<div class="grid stats" style="margin-bottom:16px">
+          <div class="card stat"><p>Total Brands</p><strong>${list.length}</strong></div>
+          <div class="card stat"><p>Active Brands</p><strong>${active}</strong><small>${list.length ? Math.round(active / list.length * 100) : 0}% of total</small></div>
+          <div class="card stat"><p>Inactive Brands</p><strong>${list.length - active}</strong></div>
+          <div class="card stat"><p>Total Products</p><strong>${state.products.filter((p) => p.is_active !== false).length}</strong><small>Across all brands</small></div>
+          <div class="card stat"><p>Top Brand</p><strong>${top?.name || '-'}</strong><small>${top ? `${productCounts[top.id] || 0} products` : ''}</small></div>
+        </div>`;
+      }
+      return '';
+    }
+    function renderProducts() {
+      const q = $('globalSearch')?.value?.toLowerCase() || '';
+      const data = state.products.filter((p) => {
+        const variantSkus = (p.variants || []).map((v) => v.sku).join(' ');
+        const haystack = `${p.name_en || ''} ${p.sku || ''} ${p.brand_name || p.brand || ''} ${variantSkus}`.toLowerCase();
+        return p.is_active !== false && (!q || haystack.includes(q));
+      });
+      const dataIds = data.map((p) => String(p.id));
+      const allChecked = dataIds.length && dataIds.every((id) => state.selected.products.has(id));
+      $('products').innerHTML = sectionHeader('Products', `${bulkDeleteButton('products','/admin/products/bulk-delete','products')}${can('products','delete') ? '<button class="btn danger" onclick="openResetCatalog()">Reset Catalog Data</button>' : ''}${can('products','export') ? '<button class="btn ghost" onclick="exportProductsCsv()">Export CSV</button>' : ''}${can('products','import') ? '<button class="btn ghost" onclick="downloadImportTemplate(\'products\')">Template</button><button class="btn ghost" onclick="openCatalogImport(\'products\')">Import CSV</button>' : ''}${can('products','add') ? '<button class="btn primary" onclick="openProduct()">+ Add Product</button>' : ''}`) +
+        catalogStats('products') +
+        `<div class="card panel">${table('', [`<input type="checkbox" ${allChecked ? 'checked' : ''} onchange="toggleAllSelection('products', ${esc(JSON.stringify(dataIds))}, this.checked)" />`,'Product','Category','Price','MRP','Stock','Status','Action'], rows(data, 'No products found', (p) => {
+          const cat = state.categories.find((c) => c.id === p.category_id)?.name_en || '-';
+          const first = (p.variants || [])[0] || {};
+          const pack = Math.max(1, Number(first.pack_quantity ?? first.packQuantity ?? 1));
+          const unitMrp = Number(first.mrp || p.mrp || 0);
+          const totalMrp = unitMrp * pack;
+          const selling = Number(first.selling_price || p.starting_price || p.buy_price || 0);
+          const discount = totalMrp > 0 ? Math.max(0, Math.round(((totalMrp - selling) / totalMrp) * 100)) : 0;
+          return `<tr><td><input type="checkbox" ${state.selected.products.has(String(p.id)) ? 'checked' : ''} onchange="toggleSelection('products','${p.id}',this.checked)" /></td><td><img class="thumb" src="${imgUrl(p.image_url)}" onerror="this.style.visibility='hidden'" /> <b>${p.name_en}</b><br><span class="muted">${p.brand_name || p.brand || ''}</span></td><td>${cat}</td><td><b>${money(selling)}</b><br><span class="muted"><s>${money(totalMrp)}</s> · ${discount}% off</span></td><td><b>MRP ${money(unitMrp)}/p</b><br><span class="muted">Pack of ${pack}</span></td><td>${first.stock_quantity ?? p.stock}</td><td>${statusPill(p.is_active ? 'Active' : 'Inactive')}</td><td class="actions">${can('products','edit') ? `<button class="btn ghost" onclick="openProduct('${p.id}')">Edit</button>` : ''}${can('products','delete') ? `<button class="btn danger" onclick="deleteProduct('${p.id}')">Delete</button>` : ''}</td></tr>`;
+        }))}</div>`;
+    }
+    function renderCategories() {
+      const q = $('globalSearch')?.value?.toLowerCase() || '';
+      const activeProducts = state.products.filter((p) => p.is_active !== false);
+      const activeCategories = state.categories.filter((c) => {
+        const haystack = `${c.name_en || ''} ${c.slug || ''}`.toLowerCase();
+        return c.is_active !== false && (!q || haystack.includes(q));
+      });
+      const dataIds = activeCategories.map((c) => String(c.id));
+      const allChecked = dataIds.length && dataIds.every((id) => state.selected.categories.has(id));
+      const counts = activeProducts.reduce((acc, p) => (acc[p.category_id] = (acc[p.category_id] || 0) + 1, acc), {});
+      $('categories').innerHTML = sectionHeader('Categories', `${bulkDeleteButton('categories','/admin/categories/bulk-delete','categories','All related products will also be deleted from the app.')}${can('categories','add') ? '<button class="btn ghost" onclick="downloadImportTemplate(\'categories\')">Template</button><button class="btn ghost" onclick="openCatalogImport(\'categories\')">Import CSV</button><button class="btn primary" onclick="openCategory()">+ Add Category</button>' : ''}`) +
+        catalogStats('categories') +
+        `<div class="card panel">${table('', [`<input type="checkbox" ${allChecked ? 'checked' : ''} onchange="toggleAllSelection('categories', ${esc(JSON.stringify(dataIds))}, this.checked)" />`,'Category Name','Products','Status','Action'], rows(activeCategories, 'No categories found', (c) => `<tr><td><input type="checkbox" ${state.selected.categories.has(String(c.id)) ? 'checked' : ''} onchange="toggleSelection('categories','${c.id}',this.checked)" /></td><td><img class="thumb" src="${imgUrl(c.image_url)}" onerror="this.style.visibility='hidden'" /> <b>${c.name_en}</b><br><span class="muted">${c.slug}</span></td><td>${counts[c.id] || 0}</td><td>${statusPill(c.is_active ? 'Active' : 'Inactive')}</td><td class="actions"><button class="btn ghost" onclick="openCategory('${c.id}')">Edit</button><button class="btn danger" onclick="deleteCategory('${c.id}')">Delete</button></td></tr>`))}</div>`;
+    }
+    function renderBrands() {
+      const q = $('globalSearch')?.value?.toLowerCase() || '';
+      const activeBrands = state.brands.filter((b) => {
+        const haystack = `${b.name || ''}`.toLowerCase();
+        return b.is_active !== false && (b.status || 'active') !== 'inactive' && (!q || haystack.includes(q));
+      });
+      const productCounts = state.products.filter((p) => p.is_active !== false).reduce((acc, p) => (acc[p.brand_id] = (acc[p.brand_id] || 0) + 1, acc), {});
+      $('brands').innerHTML = sectionHeader('Brands', `${bulkDeleteButton('brands','/admin/brands/bulk-delete','brands','All related products will also be deleted from the app.')}${can('brands', 'add') ? '<button class="btn ghost" onclick="downloadImportTemplate(\'brands\')">Template</button><button class="btn ghost" onclick="openCatalogImport(\'brands\')">Import CSV</button><button class="btn primary" onclick="openBrand()">+ Add Brand</button>' : ''}`) +
+        catalogStats('brands') +
+        `<div class="brand-grid">${activeBrands.length ? activeBrands.map((b) => `
+          <div class="card brand-card">
+            <div class="brand-card-top"><input type="checkbox" ${state.selected.brands.has(String(b.id)) ? 'checked' : ''} onchange="toggleSelection('brands','${b.id}',this.checked)" /></div>
+            <img class="brand-logo" src="${imgUrl(b.logo_url)}" onerror="this.style.visibility='hidden'" />
+            <b>${esc(b.name)}</b>
+            <span class="muted" style="font-size:12px">${esc(b.slug || '')}</span>
+            <div class="brand-card-meta"><span>Products</span><b>${productCounts[b.id] || 0}</b></div>
+            <div>${statusPill(b.status || (b.is_active ? 'active' : 'inactive'))}</div>
+            <div class="actions">${can('brands','edit') ? `<button class="btn ghost" onclick="openBrand('${b.id}')">Edit</button>` : ''}${can('brands','delete') ? `<button class="btn danger" onclick="deleteBrand('${b.id}')">Delete</button>` : ''}</div>
+          </div>`).join('') : '<p class="muted">No brands found.</p>'}</div>`;
+    }
+    function renderCustomers() {
+      const q = $('globalSearch')?.value?.toLowerCase() || '';
+      const data = state.customers.filter((c) => JSON.stringify(c).toLowerCase().includes(q));
+      $('customers').innerHTML = sectionHeader('Customers', '<button class="btn ghost" onclick="openFilters(\'customers\')">Filters</button>') +
+        `<div class="card panel">${table('', ['Customer','Phone','Area','Orders','Total Spent','Status','Action'], rows(data, 'No customers found', (c) => `<tr><td><b>${c.name || 'Retailer'}</b><br><span class="muted">${c.shop_name || ''}</span></td><td>${c.phone}</td><td>${c.area || '-'}</td><td>${c.orders || 0}</td><td>${money(c.total_spent)}</td><td>${statusPill('Active')}</td><td><button class="btn ghost" onclick="openCustomer('${c.id}')">View</button></td></tr>`))}</div>`;
+    }
+    function renderCoupons() {
+      $('coupons').innerHTML = sectionHeader('Coupons', '<button class="btn primary" onclick="openOffer()">+ Add Coupon</button>') +
+        `<div class="card panel">${table('', ['Coupon','Discount','Linked Product','Status','Action'], rows(state.offers, 'No coupons found', (o) => `<tr><td><b>${o.title}</b><br><span class="muted">${o.subtitle || ''}</span></td><td>${o.discount_percent || 0}% Off</td><td>${state.products.find((p)=>p.id===o.product_id)?.name_en || '-'}</td><td>${statusPill(o.is_active ? 'Active' : 'Inactive')}</td><td class="actions"><button class="btn ghost" onclick="openOffer('${o.id}')">Edit</button><button class="btn danger" onclick="deleteOffer('${o.id}')">Delete</button></td></tr>`))}</div>`;
+    }
+    function renderBanners() {
+      $('banners').innerHTML = sectionHeader('Banners', '<button class="btn primary" onclick="openOffer()">+ Add Banner</button>') +
+        `<div class="card panel">${table('', ['Banner','Location','Status','Action'], rows(state.offers.filter((o)=>o.image_url), 'No banners found', (o) => `<tr><td><img class="thumb" src="${imgUrl(o.image_url)}" /> <b>${o.title}</b></td><td>Home / Offers</td><td>${statusPill(o.is_active ? 'Active' : 'Inactive')}</td><td><button class="btn ghost" onclick="openOffer('${o.id}')">Edit</button></td></tr>`))}</div>`;
+    }
+    function renderSimple(id, title, heads, data, row, action = '') {
+      $(id).innerHTML = sectionHeader(title, action) + `<div class="card panel">${table('', heads, rows(data, `No ${title.toLowerCase()} found`, row))}</div>`;
+    }
+    function renderReports() {
+      const cats = state.reports.categories || [];
+      const grossSales = Number(state.dashboard.orders?.gross_sales ?? state.dashboard.orders?.revenue ?? 0);
+      const netSales = Number(state.dashboard.orders?.net_sales ?? grossSales);
+      $('reports').innerHTML = sectionHeader('Reports', '<button class="btn ghost" onclick="exportCsv(\'reports\')">Export</button>') +
+        `<div class="grid stats"><div class="card stat"><p>Total Sales</p><strong>${money(grossSales)}</strong><small>Delivered only</small></div><div class="card stat"><p>Net Sales</p><strong>${money(netSales)}</strong><small>After approved refunds</small></div><div class="card stat"><p>Pending Revenue</p><strong>${money(state.dashboard.orders?.pending_revenue)}</strong></div><div class="card stat"><p>Refunded Amount</p><strong>${money(state.dashboard.orders?.refunded_amount)}</strong></div></div>
+        <div class="card panel" style="margin-top:16px">${table('Top Categories', ['Category','Delivered Revenue','Share'], rows(cats, 'No report data', (c) => `<tr><td>${c.category || 'Uncategorized'}</td><td>${money(c.revenue)}</td><td><div class="bar"><span style="width:${Math.min(100, Number(c.revenue || 0) / Math.max(grossSales, 1) * 100)}%"></span></div></td></tr>`))}</div>`;
+    }
+    function renderUsers() {
+      $('users').innerHTML = sectionHeader('Users (Admin)', `${can('users','add') ? '<button class="btn primary" onclick="openAdminUser()">+ Add Admin</button><button class="btn ghost" onclick="openRolePermissions()">+ Add Role</button>' : ''}`) +
+        `<div class="grid two-col"><div class="card panel">${table('Admins', ['Admin Name','Email','Role','Status','Action'], rows(state.users, 'No admin users found', (u) => `<tr><td><b>${u.name}</b></td><td>${u.email}</td><td>${u.role}</td><td>${statusPill(u.status)}</td><td>${can('users','edit') ? `<button class="btn ghost" onclick="openAdminUser('${u.id}')">Edit</button>` : ''}</td></tr>`))}</div><div class="card panel">${table('Roles', ['Role','Status','Action'], rows(state.roles, 'No roles found', (r) => `<tr><td><b>${r.name}</b><br><span class="muted">${(r.permissions || []).filter((p)=>p.allowed).length} permissions</span></td><td>${statusPill(r.status)}</td><td>${can('users','edit') ? `<button class="btn ghost" onclick="openRolePermissions('${r.id}')">Edit</button>` : ''}${can('users','delete') ? `<button class="btn danger" onclick="deleteRole('${r.id}')">Delete</button>` : ''}</td></tr>`))}</div></div>`;
+    }
+    function renderReviews() {
+      const delivered = state.orders.filter((o) => String(o.status).toLowerCase().includes('deliver'));
+      $('reviews').innerHTML = sectionHeader('Reviews Management') +
+        `<div class="card panel">${table('', ['Product / Order','User','Rating','Review','Status','Action'], rows(delivered, 'No delivered orders ready for review yet', (o, index) => `<tr><td>#${shortId(o.id)}</td><td>${o.customer || o.user_id || '-'}</td><td>${'★'.repeat(4 + (index % 2))}</td><td>${o.notes || 'Order completed successfully'}</td><td>${statusPill('Approved')}</td><td><button class="btn ghost" onclick="openOrderDetail('${o.id}')">View</button></td></tr>`))}</div>`;
+    }
+    function renderReturns() {
+      renderSimple('returns', 'Returns & Refunds', ['Order','Customer','Reason','Status','Date','Action'], state.returns, (r) =>
+        `<tr><td>#${shortId(r.order_id || r.id)}</td><td>${r.customer || '-'}</td><td>${r.notes || 'Return / refund request'}<br><span class="muted">Method: ${r.refund_method || 'wallet'}</span></td><td>${statusPill(r.status)}</td><td>${date(r.updated_at)}</td><td><button class="btn ghost" onclick="openRefundDetail('${r.id}')">Details</button></td></tr>`
+      );
+    }
+    function renderRewards() {
+      $('rewards').innerHTML = sectionHeader('Rewards & Wallet', '<button class="btn primary" onclick="openLoyaltyTier()">+ Add Tier</button><button class="btn ghost" onclick="openLoyaltyRule()">+ Add Rule</button><button class="btn orange" onclick="openReward()">+ Add Reward</button>') +
+        `<div class="grid two-col">
+          <div class="card panel">${table('Loyalty Tiers', ['Tier','Min Points','Benefits','Action'], rows(state.loyaltyTiers, 'No tiers found', (t) => `<tr><td><b>${t.name}</b></td><td>${t.min_points}</td><td>${JSON.stringify(t.benefits_json || {})}</td><td class="actions"><button class="btn ghost" onclick="openLoyaltyTier('${t.id}')">Edit</button><button class="btn danger" onclick="deleteCrud('/admin/loyalty/tiers/${t.id}','tier')">Delete</button></td></tr>`))}</div>
+          <div class="card panel">${table('Earning Rules', ['Action','Points','Status','Action'], rows(state.loyaltyRules, 'No earning rules found', (r) => `<tr><td><b>${r.action}</b></td><td>${r.points_awarded}</td><td>${statusPill(r.active ? 'Active' : 'Inactive')}</td><td class="actions"><button class="btn ghost" onclick="openLoyaltyRule('${r.id}')">Edit</button><button class="btn danger" onclick="deleteCrud('/admin/loyalty/rules/${r.id}','earning rule')">Delete</button></td></tr>`))}</div>
+          <div class="card panel full">${table('Redeemable Rewards', ['Reward','Points','Type','Stock','Status','Action'], rows(state.loyaltyRewards, 'No rewards found', (r) => `<tr><td><b>${r.title}</b></td><td>${r.points_cost}</td><td>${r.reward_type}</td><td>${r.stock_limit || 'Unlimited'}</td><td>${statusPill(r.active ? 'Active' : 'Inactive')}</td><td class="actions"><button class="btn ghost" onclick="openReward('${r.id}')">Edit</button><button class="btn danger" onclick="deleteCrud('/admin/loyalty/rewards/${r.id}','reward')">Delete</button></td></tr>`))}</div>
+        </div>`;
+    }
+    function renderReferrals() {
+      $('referrals').innerHTML = sectionHeader('Referral Settings', '<button class="btn primary" onclick="openReferralSettings()">Configure Reward</button>') +
+        `<div class="grid two-col"><div class="card stat"><p>Referral Reward</p><strong>${money(state.referrals.settings?.reward_amount || 200)}</strong><small>credited after first order</small></div>
+        <div class="card panel">${table('Referral Events', ['Referrer','Referred','Status','Reward','Date'], rows(state.referrals.events || [], 'No referral events found', (e) => `<tr><td>${e.referrer_name || e.referrer_customer_id}</td><td>${e.referred_name || e.referred_customer_id}</td><td>${statusPill(e.status)}</td><td>${money(e.reward_amount)}</td><td>${date(e.created_at)}</td></tr>`))}</div></div>`;
+    }
+    
+
+      function toLocalInput(value) {
+        if (!value) return '';
+        const date = new Date(value);
+        if (Number.isNaN(date.getTime())) return '';
+        const offset = date.getTimezoneOffset() * 60000;
+        return new Date(date.getTime() - offset).toISOString().slice(0, 16);
+      }
+
+      function homeSectionPayload(form) {
+        let config = {};
+        const rawConfig = form.config.value.trim();
+        if (rawConfig) {
+          try {
+            config = JSON.parse(rawConfig);
+          } catch (error) {
+            throw new Error('Config must be valid JSON.');
+          }
+        }
+        return {
+          title: form.title.value.trim(),
+          sectionKey: form.section_key.value.trim(),
+          type: form.type.value,
+          position: Number(form.position.value || 0),
+          displayOrder: Number(form.position.value || 0),
+          enabled: form.enabled.value === 'true',
+          active: form.enabled.value === 'true',
+          startsAt: form.starts_at.value ? new Date(form.starts_at.value).toISOString() : null,
+          endsAt: form.ends_at.value ? new Date(form.ends_at.value).toISOString() : null,
+          config,
+        };
+      }
+
+      async function moveHomeSection(id, delta) {
+        const section = state.homeSections.find((item) => item.id === id);
+        if (!section) return;
+        const nextPosition = Number(section.position ?? section.display_order ?? 0) + delta;
+        const payload = {
+          ...section,
+          sectionKey: section.section_key,
+          displayOrder: nextPosition,
+          position: nextPosition,
+          enabled: section.enabled !== false && section.active !== false,
+          active: section.enabled !== false && section.active !== false,
+        };
+        await api('/admin/home-sections/' + id, { method: 'PUT', body: JSON.stringify(payload) });
+        await loadAdminData();
+        renderHomeSections();
+      }
+
+      function renderHomeSections() {
+        const list = state.homeSections || [];
+        const rows = list
+          .slice()
+          .sort((a, b) => Number(a.position ?? a.display_order ?? 0) - Number(b.position ?? b.display_order ?? 0))
+          .map((section) => {
+            const items = Array.isArray(section.items) ? section.items.length : Number(section.item_count || 0);
+            const status = section.enabled === false || section.active === false ? 'Inactive' : 'Active';
+            const position = Number(section.position ?? section.display_order ?? 0);
+            return `<tr>
+              <td>
+                <strong>\${escapeHtml(section.title || section.section_key || 'Untitled')}</strong>
+                <div class="muted">\${escapeHtml(section.section_key || '')}</div>
+              </td>
+              <td>\${escapeHtml(section.type || 'product_carousel')}</td>
+              <td>\${items}</td>
+              <td>\${position}</td>
+              <td><span class="badge \${status === 'Active' ? 'success' : 'muted'}">\${status}</span></td>
+              <td class="actions-cell">
+                <button class="btn ghost small" onclick="moveHomeSection('\${section.id}', -1)">Up</button>
+                <button class="btn ghost small" onclick="moveHomeSection('\${section.id}', 1)">Down</button>
+                <button class="btn ghost small" onclick="openHomeSection('\${section.id}')">Edit</button>
+                <button class="btn danger small" onclick="deleteHomeSection('\${section.id}')">Delete</button>
+              </td>
+            </tr>`;
+          })
+          .join('');
+        $('home-sections').innerHTML = `
+          <section class="page-head">
+            <div>
+              <h1>Home Sections</h1>
+              <p class="muted">Control the homepage rails, banners, category grids and featured product carousels shown in the mobile app.</p>
+            </div>
+            <button class="btn primary" onclick="openHomeSection()">+ Add Section</button>
+          </section>
+          <div class="card table-card">
+            <table>
+              <thead><tr><th>Section</th><th>Type</th><th>Items</th><th>Position</th><th>Status</th><th>Action</th></tr></thead>
+              <tbody>\${rows || '<tr><td colspan="6">No home sections found</td></tr>'}</tbody>
+            </table>
+          </div>
+        `;
+      }
+    function renderDeliveryZones() {
+      $('delivery-zones').innerHTML = sectionHeader('Delivery Zones', '<button class="btn primary" onclick="openDeliveryZone()">+ Add Zone</button>') +
+        `<div class="card panel">${table('', ['Zone','Coverage','ETA','Fee','Free Delivery Above','Status','Action'], rows(state.deliveryZones, 'No delivery zones found', (z) => {
+          const isRadius = z.zone_type === 'radius';
+          const coverage = isRadius ? `${z.radius_km || 0}km from ${z.center_lat || '-'}, ${z.center_lng || '-'}` : (Array.isArray(z.pincodes_json) ? z.pincodes_json.join(', ') : JSON.stringify(z.pincodes_json || []));
+          return `<tr><td><b>${z.name}</b><br><span class="muted">${isRadius ? 'Radius zone' : 'Pincode zone'}</span></td><td>${coverage}</td><td>${z.estimated_delivery_minutes} min</td><td>${money(z.delivery_fee)}</td><td>${money(z.free_delivery_min_order)}</td><td>${statusPill(z.active ? 'Active' : 'Inactive')}</td><td class="actions"><button class="btn ghost" onclick="openDeliveryZone('${z.id}')">Edit</button><button class="btn danger" onclick="deleteCrud('/admin/delivery-zones/${z.id}','delivery zone')">Delete</button></td></tr>`;
+        }))}</div>`;
+    }
+    function renderNotifications() {
+      $('notifications').innerHTML = sectionHeader('Notification History', '<button class="btn primary" onclick="openPushNotification()">Send Push</button>') +
+        `<div class="card panel">${table('', ['Target','Title','Body','Status','Sent At'], rows(state.notificationHistory, 'No notifications found', (n) => `<tr><td>${n.target}</td><td><b>${n.title}</b></td><td>${n.body}</td><td>${statusPill(n.delivery_status)}</td><td>${date(n.sent_at)}</td></tr>`))}</div>`;
+    }
+    function renderSettings() {
+      const s = { ...state.settings };
+      $('settings').innerHTML = sectionHeader('Settings - General Settings', '<button class="btn primary" onclick="openPushNotification()">Send Push Notification</button>') +
+        `<div class="grid two-col"><form id="settingsForm" class="card panel form-grid">
+          <label>Site Name<input id="settingAppName" value="${s.appName || 'VyparHub'}" /></label>
+          <label>Support Email<input id="settingEmail" value="${s.supportEmail || 'support@vyparhub.com'}" /></label>
+          <label>Contact Number<input id="settingPhone" value="${s.supportPhone || '+91 98765 43210'}" /></label>
+          <label>Currency<select id="settingCurrency"><option>INR</option></select></label>
+          <label>Time Zone<select id="settingZone"><option>Asia/Kolkata</option><option>Asia/Kathmandu</option></select></label>
+          <label>Current Version<input id="settingVersion" value="${s.currentVersion || '2.1.0'}" /></label>
+          <label>Minimum Version<input id="settingMinVersion" value="${s.minimumVersion || '2.0.0'}" /></label>
+          <label>Maintenance Mode<select id="settingMaintenance"><option value="false">Disabled</option><option value="true">Enabled</option></select></label>
+          <div class="full actions"><button class="btn ghost" type="button" onclick="renderSettings()">Cancel</button><button class="btn primary" type="submit">Save Changes</button></div>
+        </form>
+        <div class="grid"><div class="card panel"><h2>Logo</h2><div class="brand" style="font-size:36px"><span>Vypar<b>Hub</b></span></div><button class="btn ghost" onclick="openAssetUpload('Logo')">Change Logo</button></div><div class="card panel"><h2>Favicon</h2><div class="avatar">V</div><br><button class="btn ghost" onclick="openAssetUpload('Favicon')">Change Favicon</button></div></div></div>`;
+      $('settingsForm').onsubmit = saveSettings;
+    }
+    function renderSystem() {
+      $('system').innerHTML = sectionHeader('Update App / App Settings', '<button class="btn primary" onclick="openPushNotification()">Send Push</button>') +
+        `<div class="grid two-col"><div class="card panel"><h2>App Version</h2><p class="muted">Current version: ${state.settings.currentVersion || '2.1.0'}</p><p class="muted">Minimum required: ${state.settings.minimumVersion || '2.0.0'}</p><button class="btn primary" onclick="setRoute('settings')">Update Version Settings</button></div><div class="card panel"><h2>App Maintenance</h2><p class="muted">Use this to prepare app-wide maintenance messaging for users.</p><button class="btn ghost" onclick="setRoute('settings')">Open General Settings</button></div></div>`;
+    }
+    function renderLogs() {
+      renderSimple('logs', 'Users Activity Log', ['Date / Time','Module','Action','Details'], state.logs, (l) =>
+        `<tr><td>${date(l.date_time)}</td><td>${l.module}</td><td>${l.action}</td><td>${l.details}</td></tr>`
+      );
+    }
+    function render() {
+      if (state.route === 'dashboard') renderDashboard();
+      if (state.route === 'orders') renderOrders();
+      if (state.route === 'products') renderProducts();
+      if (state.route === 'brands') renderBrands();
+      if (state.route === 'categories') renderCategories();
+      if (state.route === 'users') renderUsers();
+      if (state.route === 'customers') renderCustomers();
+      if (state.route === 'marketing') renderCoupons();
+      if (state.route === 'rewards') renderRewards();
+      if (state.route === 'referrals') renderReferrals();
+      if (state.route === 'home-sections') renderHomeSections();
+      if (state.route === 'delivery-zones') renderDeliveryZones();
+      if (state.route === 'notifications') renderNotifications();
+      if (state.route === 'coupons') renderCoupons();
+      if (state.route === 'banners') renderBanners();
+      if (state.route === 'reviews') renderReviews();
+      if (state.route === 'returns') renderReturns();
+      if (state.route === 'reports') renderReports();
+      if (state.route === 'payments') renderSimple('payments', 'Payment Methods', ['Order','Mode','Amount','Status','Date'], state.payments, (p) => `<tr><td>#${shortId(p.order_id)}</td><td>${p.mode}</td><td>${money(p.amount)}</td><td>${statusPill(p.status)}</td><td>${date(p.created_at)}</td></tr>`);
+      if (state.route === 'payouts') renderSimple('payouts', 'Payouts', ['Vendor','Products','Pending Amount','Status'], state.payouts, (p) => `<tr><td>${p.vendor}</td><td>${p.products}</td><td>${money(p.pending_amount)}</td><td>${statusPill(Number(p.pending_amount) > 0 ? 'Pending' : 'Paid')}</td></tr>`);
+      if (state.route === 'settings') renderSettings();
+      if (state.route === 'system') renderSystem();
+      if (state.route === 'logs') renderLogs();
+      if (state.route === 'support') renderSimple('support', 'Support / Tickets', ['Ticket','Customer','Issue','Status','Updated'], state.support, (t) => `<tr><td>#${shortId(t.id)}</td><td>${t.customer || '-'}</td><td>${t.issue}</td><td>${statusPill(t.status || 'Open')}</td><td>${date(t.updated_at)}</td></tr>`);
+    }
+    async function runGlobalSearch() {
+      const q = $('globalSearch').value.trim();
+      if (!q) {
+        $('searchResults').classList.remove('open');
+        $('searchResults').innerHTML = '';
+        render();
+        return;
+      }
+      try {
+        const results = await request(`/admin/search?q=${encodeURIComponent(q)}`);
+        const hits = [
+          ...(results.products || []).map((p) => `<button class="search-hit" onclick="state.route='products'; $('searchResults').classList.remove('open'); render(); openProduct('${p.id}')"><b>Product:</b> ${p.name_en} <span class="muted">${p.sku || ''} ${money(p.starting_price || p.buy_price)}</span></button>`),
+          ...(results.brands || []).map((b) => `<button class="search-hit" onclick="state.route='brands'; $('searchResults').classList.remove('open'); render(); openBrand('${b.id}')"><b>Brand:</b> ${b.name} <span class="muted">${b.status || 'active'}</span></button>`),
+          ...(results.categories || []).map((c) => `<button class="search-hit" onclick="state.route='categories'; $('searchResults').classList.remove('open'); render(); openCategory('${c.id}')"><b>Category:</b> ${c.name_en} <span class="muted">${c.slug || ''}</span></button>`),
+          ...(results.orders || []).map((o) => `<div class="search-hit"><b>Order:</b> #${shortId(o.id)} <span class="muted">${o.status} ${money(o.total)}</span></div>`),
+          ...(results.customers || []).map((c) => `<div class="search-hit"><b>Customer:</b> ${c.name} <span class="muted">${c.phone}</span></div>`),
+        ];
+        $('searchResults').innerHTML = hits.length ? hits.join('') : '<div class="search-hit muted">No matches found</div>';
+        $('searchResults').classList.add('open');
+        render();
+      } catch (error) {
+        $('searchResults').innerHTML = `<div class="search-hit">${error.message}</div>`;
+        $('searchResults').classList.add('open');
+      }
+    }
+    async function refresh() {
+      const loaders = [
+        ['dashboard', 'dashboard', 'view', `/admin/dashboard?range=${encodeURIComponent(state.dashboardRange)}`, {}],
+        ['catalogVisibility', 'products', 'view', '/admin/catalog/visibility', {}],
+        ['categories', 'categories', 'view', '/admin/categories', []],
+        ['products', 'products', 'view', '/admin/products', []],
+        ['orders', 'orders', 'view', '/admin/orders', []],
+        ['offers', 'coupons', 'view', '/admin/offers', []],
+        ['brands', 'brands', 'view', '/admin/brands', []],
+        ['customers', 'customers', 'view', '/admin/customers', []],
+        ['reports', 'reports', 'view', '/admin/reports', {}],
+        ['payments', 'payments', 'view', '/admin/payments', []],
+        ['payouts', 'payouts', 'view', '/admin/payouts', []],
+        ['returns', 'returns', 'view', '/admin/returns', []],
+        ['support', 'support', 'view', '/admin/support', []],
+        ['users', 'users', 'view', '/admin/users', []],
+        ['roles', 'users', 'view', '/admin/roles', []],
+        ['logs', 'logs', 'view', '/admin/logs', []],
+        ['settings', 'settings', 'view', '/admin/settings', {}],
+        ['loyaltyTiers', 'rewards', 'view', '/admin/loyalty/tiers', []],
+        ['loyaltyRules', 'rewards', 'view', '/admin/loyalty/rules', []],
+        ['loyaltyRewards', 'rewards', 'view', '/admin/loyalty/rewards', []],
+        ['referrals', 'rewards', 'view', '/admin/referrals', { settings: {}, events: [] }],
+        ['homeSections', 'merchandising', 'view', '/admin/home-sections', []],
+        ['deliveryZones', 'merchandising', 'view', '/admin/delivery-zones', []],
+        ['notificationHistory', 'marketing', 'view', '/admin/notifications', []],
+      ];
+      const results = await Promise.allSettled(loaders.map(([, module, action, path, fallback]) =>
+        can(module, action) ? request(path) : Promise.resolve(fallback)
+      ));
+      const next = {};
+      const loadErrors = [];
+      results.forEach((result, index) => {
+        const [key,,,, fallback] = loaders[index];
+        if (result.status === 'fulfilled') {
+          next[key] = result.value;
+        } else {
+          next[key] = fallback;
+          loadErrors.push(`${key}: ${result.reason?.message || 'failed'}`);
+        }
+      });
+      Object.assign(state, next, { loadErrors, dashboardLastUpdated: new Date().toISOString() });
+      render();
+      if (loadErrors.length && state.token) showToast(`Some data could not load: ${loadErrors[0]}`);
+    }
+    function modal(title, html) {
+      $('modalTitle').textContent = title;
+      $('modalBody').innerHTML = html;
+      $('modal').classList.add('open');
+    }
+    function closeModal() { $('modal').classList.remove('open'); }
+    function imageUploader(current = '', fieldId = 'imageUrl') {
+      const fileId = `${fieldId}File`;
+      const previewId = `${fieldId}Preview`;
+      return `<div class="upload-box full"><label>Image URL <input id="${fieldId}" value="${esc(current || '')}" placeholder="Upload an image or paste a catalog image URL" /></label><div class="preview"><input id="${fileId}" type="file" accept="image/*" /><button class="btn ghost" type="button" onclick="uploadImage('${fieldId}', '${fileId}', '${previewId}')">Upload</button><img id="${previewId}" src="${imgUrl(current)}" onerror="this.style.display='none'" /></div><p class="muted">Upload failures are shown as errors and are not replaced with a default product image.</p></div>`;
+    }
+    function openFilters(route = state.route) {
+      modal('Filters', `<form id="filterForm" class="form-grid">
+        <label class="full">Search Text<input id="filterQuery" value="${$('globalSearch')?.value || ''}" placeholder="Search by order, product, customer or phone" /></label>
+        <label>Status<select id="filterStatus">
+          ${['All','Placed','Confirmed','Packed','Shipped','Out_for_delivery','Delivered','Cancelled','Active','Inactive'].map((s) => `<option value="${s}" ${state.filter === s ? 'selected' : ''}>${s.replaceAll('_',' ')}</option>`).join('')}
+        </select></label>
+        <div class="full actions"><button class="btn ghost" type="button" onclick="closeModal()">Cancel</button><button class="btn primary" type="submit">Apply Filters</button></div>
+      </form>`);
+      $('filterForm').onsubmit = (e) => {
+        e.preventDefault();
+        if ($('globalSearch')) $('globalSearch').value = $('filterQuery').value;
+        state.filter = $('filterStatus').value || 'All';
+        closeModal();
+        setRoute(route);
+      };
+    }
+    function openAssetUpload(label) {
+      modal(`Change ${label}`, `<form id="assetForm" class="form-grid">
+        ${imageUploader('', 'assetImageUrl')}
+        <p class="full muted">Upload is saved to the server and can be copied into Settings. Logo replacement in the app assets is handled during the next mobile build.</p>
+        <div class="full actions"><button class="btn ghost" type="button" onclick="closeModal()">Cancel</button><button class="btn primary" type="submit">Save ${label}</button></div>
+      </form>`);
+      $('assetForm').onsubmit = (e) => {
+        e.preventDefault();
+        showToast(`${label} uploaded. Use this path: ${$('assetImageUrl').value || 'no file selected'}`);
+        closeModal();
+      };
+    }
+    async function uploadImage(fieldId = 'imageUrl', fileId = 'imageFile', previewId = 'imagePreview') {
+      const file = $(fileId)?.files?.[0];
+      if (!file) {
+        showToast('Choose an image first.');
+        return;
+      }
+      const form = new FormData();
+      form.append('file', file);
+      try {
+        const data = await request('/admin/uploads', { method: 'POST', body: form });
+        $(fieldId).value = data.path;
+        $(previewId).src = data.url || data.path;
+        $(previewId).style.display = 'block';
+        showToast('Image uploaded successfully.');
+      } catch (error) {
+        showToast(`Image upload failed: ${error.message}`);
+      }
+    }
+    function validNextStatuses(current) {
+      const flow = ['placed','confirmed','packed','shipped','out_for_delivery','delivered'];
+      const normalized = String(current || 'placed').toLowerCase();
+      if (['delivered', 'cancelled'].includes(normalized)) return [];
+      const index = flow.indexOf(normalized);
+      return [...(index >= 0 && flow[index + 1] ? [flow[index + 1]] : []), 'cancelled'];
+    }
+    const orderFlow = ['placed','confirmed','packed','shipped','out_for_delivery','delivered'];
+    const orderLabel = (status) => String(status || '').replaceAll('_', ' ');
+    function nextOrderStatus(current) {
+      const normalized = String(current || 'placed').toLowerCase();
+      if (['delivered', 'cancelled', 'partially_refunded', 'refunded'].includes(normalized)) return null;
+      const index = orderFlow.indexOf(normalized);
+      return index >= 0 ? orderFlow[index + 1] || null : 'confirmed';
+    }
+    function canCancelOrder(current) {
+      return !['delivered', 'cancelled', 'partially_refunded', 'refunded'].includes(String(current || '').toLowerCase());
+    }
+    function isPaidOrder(order) {
+      const mode = String(order.payment_mode || 'cod').toLowerCase();
+      const paymentStatus = String(order.payment_status || '').toLowerCase();
+      return mode !== 'cod' || ['paid', 'captured', 'success', 'completed'].includes(paymentStatus);
+    }
+    function refundedTotal(order) {
+      const direct = Number(order.refunded_total || 0);
+      const fromRows = state.returns
+        .filter((item) => item.order_id === order.id && ['processed', 'pending', 'credited_to_wallet', 'store_credit_issued', 'pending_manual_gateway_refund'].includes(String(item.status).toLowerCase()))
+        .reduce((sum, item) => sum + Number(item.total || 0), 0);
+      return Math.max(direct, fromRows);
+    }
+    function remainingRefundable(order) {
+      return Math.max(0, Number(order.total || 0) - refundedTotal(order));
+    }
+    function canRefundOrder(order) {
+      const status = String(order.status || '').toLowerCase();
+      if (status === 'refunded') return false;
+      if (status === 'cancelled' && !isPaidOrder(order)) return false;
+      return ['delivered', 'partially_refunded', 'cancelled'].includes(status) && remainingRefundable(order) > 0;
+    }
+    function orderStepper(o) {
+      const normalized = String(o.status || 'placed').toLowerCase();
+      const history = o.status_history || [];
+      const currentIndex = orderFlow.indexOf(normalized);
+      const next = nextOrderStatus(normalized);
+      return `<div class="order-stepper">${orderFlow.map((status, index) => {
+        const hit = history.find((h) => h.status === status);
+        const cls = normalized === 'cancelled'
+          ? ''
+          : status === next
+            ? 'next'
+            : index < currentIndex || hit
+              ? 'done'
+              : index === currentIndex
+                ? 'current'
+                : '';
+        const marker = cls === 'done' ? '&#10003;' : index + 1;
+        return `<div class="order-step ${cls}">
+          <span class="step-dot">${marker}</span>
+          <span><span class="step-title">${orderLabel(status)}</span><br><span class="step-meta">${hit ? date(hit.changed_at) : status === next ? 'Next allowed step' : ''}</span></span>
+          ${status === next ? `<button class="btn orange" onclick="updateOrder('${o.id}', '${status}')">Mark ${orderLabel(status)}</button>` : ''}
+        </div>`;
+      }).join('')}${['cancelled','partially_refunded','refunded'].includes(normalized) ? `<div class="order-step current"><span class="step-dot">!</span><span><span class="step-title">${orderLabel(normalized)}</span><br><span class="step-meta">Managed by refund/cancel workflow.</span></span></div>` : ''}</div>`;
+    }
+    function orderProgressBar(o) {
+      const normalized = String(o.status || 'placed').toLowerCase();
+      const history = o.status_history || [];
+      const currentIndex = orderFlow.indexOf(normalized);
+      const isTerminalIssue = ['cancelled', 'partially_refunded', 'refunded'].includes(normalized);
+      return `<div class="order-progress">${orderFlow.map((status, index) => {
+        const hit = history.find((h) => h.status === status);
+        const done = !isTerminalIssue && (index < currentIndex || Boolean(hit) || index === currentIndex);
+        const isCurrent = !isTerminalIssue && index === currentIndex && !hit;
+        const cls = done ? 'done' : isCurrent ? 'current' : '';
+        const marker = done ? '&#10003;' : index + 1;
+        const connector = index < orderFlow.length - 1 ? `<span class="order-progress-line ${index < currentIndex && !isTerminalIssue ? 'done' : ''}"></span>` : '';
+        return `<div class="order-progress-step ${cls}">
+          <span class="progress-dot">${marker}</span>
+          <span class="progress-label">${orderLabel(status)}</span>
+          <span class="progress-meta">${hit ? date(hit.changed_at) : '&ndash;'}</span>
+        </div>${connector}`;
+      }).join('')}</div>${isTerminalIssue ? `<p class="muted" style="margin:-12px 0 16px">This order is <b>${orderLabel(normalized)}</b> and is managed by the refund/cancel workflow instead of the standard fulfilment steps.</p>` : ''}`;
+    }
+    function orderNextActionCard(o) {
+      const normalized = String(o.status || 'placed').toLowerCase();
+      const next = nextOrderStatus(normalized);
+      if (['cancelled', 'partially_refunded', 'refunded'].includes(normalized)) {
+        return `<div class="next-action-card"><p>This order is <b>${orderLabel(normalized)}</b>. Use Issue Refund or Return Requests below if further action is needed.</p></div>`;
+      }
+      if (!next) {
+        return `<div class="next-action-card done-card"><p>This order has been <b>delivered</b>. No further status updates are available.</p></div>`;
+      }
+      return `<div class="next-action-card">
+        <p>The order is <b>${orderLabel(normalized)}</b>.<br>Mark it as <b>${orderLabel(next)}</b> to continue.</p>
+        <button class="btn orange" onclick="updateOrder('${o.id}', '${next}')">Mark ${orderLabel(next)}</button>
+      </div>`;
+    }
+    function orderItemMeta(item) {
+      const product = item.product || {};
+      const parts = [
+        product.sku ? `SKU: ${product.sku}` : '',
+        product.pack ? `Pack of ${product.pack}` : '',
+        product.size ? product.size : '',
+      ].filter(Boolean);
+      return parts.join(' &middot; ');
+    }
+    function openOrderDetail(id) {
+      const o = state.orders.find((item) => item.id === id);
+      if (!o) return alert('Order not found.');
+      const items = Array.isArray(o.items) ? o.items : [];
+      const delivery = Number(o.delivery_charge || o.delivery_charges || 0);
+      const discount = Number(o.discount || o.discount_amount || 0);
+      modal(`Order Details #${shortId(o.id)}`, `
+        ${orderProgressBar(o)}
+        <div class="grid two-col-detail">
+          <div class="card panel detail-card">
+            <h2>&#128196; Order Information</h2>
+            <div class="kv"><span>Order ID</span><span>#${shortId(o.id)}</span></div>
+            <div class="kv"><span>Order Date</span><span>${date(o.created_at)}</span></div>
+            <div class="kv"><span>Payment Method</span><span>${(o.payment_mode || 'cod').toUpperCase() === 'COD' ? 'COD (Cash on Delivery)' : (o.payment_mode || 'COD')}</span></div>
+            <div class="kv"><span>Status</span><span>${statusPill(o.status)}</span></div>
+          </div>
+          <div class="card panel detail-card">
+            <h2>&#128100; Customer Information</h2>
+            <div class="kv"><span>Customer Name</span><span>${esc(o.customer || '-')}</span></div>
+            <div class="kv"><span>User ID</span><span>${esc(o.user_id || '-')}</span></div>
+            <div class="kv"><span>Phone</span><span>${esc(o.phone || '-')}</span></div>
+            <div class="kv"><span>Email</span><span>${esc(o.email || '-')}</span></div>
+          </div>
+        </div>
+        <div class="grid two-col-detail" style="margin-top:16px">
+          <div class="card panel detail-card">
+            <h2>&#128230; Order Items</h2>
+            ${table('', ['Product','Price','Qty','Total'], rows(items, 'Order item snapshots unavailable', (item) => {
+              const product = item.product || {};
+              const qty = Number(item.quantity || 1);
+              const price = Number(item.buyPrice ?? item.buy_price ?? 0);
+              const meta = orderItemMeta(item);
+              return `<tr><td><div class="item-detail-row"><img class="thumb" src="${imgUrl(product.imageUrl || product.image_url)}" onerror="this.style.visibility='hidden'" /><div><div>${esc(product.name || item.name || 'Item')}</div>${meta ? `<div class="item-detail-meta">${meta}</div>` : ''}</div></div></td><td>${money(price)}</td><td>${qty}</td><td>${money(price * qty)}</td></tr>`;
+            }))}
+            <div class="summary-line"><span>Item Total</span><b>${money(o.total - delivery + discount)}</b></div>
+            <div class="summary-line"><span>Delivery Charges</span><b>${delivery ? money(delivery) : 'FREE'}</b></div>
+          </div>
+          <div class="card panel detail-card">
+            <h2>&#128179; Payment Summary</h2>
+            <div class="summary-line"><span>Item Total</span><span>${money(o.total - delivery + discount)}</span></div>
+            <div class="summary-line"><span>Delivery Charges</span><span>${delivery ? money(delivery) : 'FREE'}</span></div>
+            <div class="summary-line"><span>Discount</span><span>${discount ? `-${money(discount)}` : money(0)}</span></div>
+            <div class="summary-line grand"><span>Total Amount</span><span>${money(o.total)}</span></div>
+            <span class="paid-badge">Paid via ${(o.payment_mode || 'COD').toUpperCase()}</span>
+          </div>
+        </div>
+        <div class="grid two-col-detail" style="margin-top:16px">
+          <div class="card panel detail-card">
+            <h2>&#128337; Order Timeline</h2>
+            ${['placed','confirmed','packed','shipped','out_for_delivery','delivered'].map((s) => {
+              const history = o.status_history || [];
+              const hit = history.find((h) => h.status === s);
+              const done = Boolean(hit || o.status === s);
+              return `<div class="order-timeline-item ${done ? 'done' : ''}"><span class="dot">${done ? '&#10003;' : ''}</span><span>${orderLabel(s).replace(/^./, (c) => c.toUpperCase())}</span><span class="muted" style="margin-left:auto">${hit ? date(hit.changed_at) : 'Pending'}</span></div>`;
+            }).join('')}
+          </div>
+          <div class="card panel detail-card">
+            <h2>&#9889; Next Action</h2>
+            ${orderNextActionCard(o)}
+          </div>
+        </div>
+        <div class="order-detail-footer">
+          <span class="muted"><b>Refunded:</b> ${money(refundedTotal(o))} &middot; Remaining ${money(remainingRefundable(o))}</span>
+          <div class="actions">
+            <button class="btn ghost" onclick="openInvoice('${o.id}')">View Invoice</button>
+            ${canCancelOrder(o.status) ? `<button class="btn danger" onclick="updateOrder('${o.id}', 'cancelled')">Cancel Order</button>` : ''}
+            ${canRefundOrder(o) ? `<button class="btn orange" onclick="openAdminRefund('${o.id}')">Issue Refund</button>` : `<button class="btn ghost" disabled>Refund unavailable</button>`}
+            <button class="btn ghost" onclick="openRefundDetail('${o.id}')">Return Requests</button>
+          </div>
+        </div>
+      `);
+    }
+    function openInvoice(id) {
+      const order = state.orders.find((item) => item.id === id);
+      if (order) {
+        sessionStorage.setItem(`vyparhub_invoice_order_${id}`, JSON.stringify(order));
+      }
+      window.open(`/admin/invoice.html?orderId=${encodeURIComponent(id)}`, '_blank', 'noopener');
+    }
+    function openAdminRefund(id) {
+      const order = state.orders.find((item) => item.id === id);
+      if (!order) return alert('Order not found.');
+      if (!canRefundOrder(order)) return alert('This order is not eligible for a refund.');
+      const remaining = remainingRefundable(order);
+      const items = Array.isArray(order.items) ? order.items : [];
+      modal(`Issue Refund #${shortId(order.id)}`, `<form id="adminRefundForm" class="form-grid">
+        <div class="card panel full"><h2>Refund Summary</h2><p>Order total: <b>${money(order.total)}</b></p><p>Already refunded: <b>${money(refundedTotal(order))}</b></p><p>Remaining refundable: <b>${money(remaining)}</b></p></div>
+        <label>Refund Type<select id="refundType"><option value="full">Full refund</option><option value="partial">Partial refund</option></select></label>
+        <label>Amount<input id="refundAmount" type="number" min="1" max="${remaining}" step="0.01" value="${remaining.toFixed(2)}" required /></label>
+        <label>Destination<select id="refundDestination"><option value="wallet">VyparHub Wallet</option><option value="store_credit">Store Credit</option><option value="original_payment">Original Payment</option><option value="upi">UPI / Bank Transfer</option></select></label>
+        <label>Reason<select id="refundReason"><option value="Damaged item">Damaged item</option><option value="Wrong item">Wrong item</option><option value="Customer request">Customer request</option><option value="Late delivery">Late delivery</option><option value="Price adjustment">Price adjustment</option><option value="Other">Other</option></select></label>
+        <label class="full">Admin Notes<textarea id="refundAdminNotes" placeholder="Add context for audit trail"></textarea></label>
+        <div class="card panel full">${table('Refund Line Items', ['Select','Item','Qty','Amount'], rows(items, 'Order item snapshots unavailable', (item, index) => {
+          const price = Number(item.buyPrice || item.buy_price || item.price || 0);
+          const qty = Number(item.quantity || 1);
+          return `<tr><td><input class="refund-item" type="checkbox" value="${index}" checked /></td><td>${esc(item.product?.name || item.name || 'Item')}</td><td>${qty}</td><td>${money(price * qty)}</td></tr>`;
+        }))}</div>
+        <div class="full form-alert">Original payment and UPI refunds are marked pending for gateway/manual processing. Wallet and store-credit refunds are processed immediately.</div>
+        <div class="full actions"><button class="btn ghost" type="button" onclick="closeModal()">Cancel</button><button id="adminRefundSubmit" class="btn primary" type="submit">Create Refund</button></div>
+      </form>`);
+      $('refundType').onchange = () => {
+        if ($('refundType').value === 'full') $('refundAmount').value = remaining.toFixed(2);
+      };
+      $('adminRefundForm').onsubmit = async (e) => {
+        e.preventDefault();
+        const submit = $('adminRefundSubmit');
+        const amount = Number($('refundAmount').value);
+        if (!Number.isFinite(amount) || amount <= 0 || amount > remaining) {
+          return showToast(`Refund amount must be between Rs 1 and ${money(remaining)}`);
+        }
+        submit.disabled = true;
+        submit.textContent = 'Processing...';
+        const idempotencyKey = (crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`);
+        const selectedItems = [...document.querySelectorAll('.refund-item:checked')].map((input) => items[Number(input.value)]).filter(Boolean);
+        try {
+          await request(`/admin/orders/${order.id}/refunds`, {
+            method: 'POST',
+            headers: { 'Idempotency-Key': idempotencyKey },
+            body: JSON.stringify({
+              idempotencyKey,
+              amount,
+              destination: $('refundDestination').value,
+              reason: $('refundReason').value,
+              notes: $('refundAdminNotes').value,
+              items: selectedItems,
+            }),
+          });
+          closeModal();
+          await Promise.all([refreshOrderOnly(order.id), refreshReturnsOnly(), refreshDashboardOnly()]);
+          setRoute('returns');
+          showToast('Refund saved, dashboard updated, and customer notified.');
+        } catch (error) {
+          submit.disabled = false;
+          submit.textContent = 'Create Refund';
+          showToast(error.message);
+        }
+      };
+    }
+    function openRefundDetail(id) {
+      const refund = state.returns.find((item) => item.id === id);
+      const order = state.orders.find((item) => item.id === id);
+      if (!refund && order) return openReturnRequest(order);
+      const r = refund;
+      if (!r) return alert('Request not found.');
+      const method = r.refund_method || 'wallet';
+      if (r.source === 'refund') {
+        return modal(`Refund #${shortId(r.id)}`, `<div class="grid two-col">
+          <div class="card panel"><h2>Customer Information</h2><p><b>${r.customer || '-'}</b></p><p>${r.phone || ''}</p><p class="muted">${r.notes || 'Admin refund'}</p></div>
+          <div class="card panel"><h2>Refund Information</h2><p>Order ID: #${shortId(r.order_id || r.id)}</p><p>Amount: <b>${money(r.total)}</b></p><p>Status: ${statusPill(r.status)}</p><p><b>Destination:</b> ${method.replaceAll('_',' ')}</p><p class="muted">This refund was created directly by an admin and is audit logged.</p></div>
+        </div>`);
+      }
+      const methodMessage = method === 'wallet'
+        ? `Approval will credit ${money(r.total)} to the customer's wallet.`
+        : method === 'original_payment'
+          ? 'Approval will mark this for manual refund to the original payment method.'
+          : method === 'upi'
+            ? 'Approval will mark this for manual UPI refund.'
+            : 'Approval will issue store credit.';
+      modal(`Refund Request #${shortId(r.id)}`, `<div class="grid two-col">
+        <div class="card panel"><h2>Customer Information</h2><p><b>${r.customer || r.user_id || '-'}</b></p><p>${r.phone || ''}</p><p class="muted">${r.notes || 'Return requested by customer'}</p></div>
+        <div class="card panel"><h2>Order Information</h2><p>Order ID: #${shortId(r.order_id || r.id)}</p><p>Amount: <b>${money(r.total)}</b></p><p>Status: ${statusPill(r.status)}</p><p><b>Refund Method:</b> ${method.replaceAll('_',' ')}</p><p class="muted">${methodMessage}</p></div>
+        <div class="card panel full"><h2>Action</h2><label>Admin Notes<textarea id="refundNotes">Refund reviewed by admin.</textarea></label><br><div class="actions"><button class="btn danger" onclick="rejectRefund('${r.id}')">Reject Request</button><button class="btn primary" onclick="approveRefund('${r.id}')">Approve Refund</button></div></div>
+      </div>`);
+    }
+    function openReturnRequest(order) {
+      modal(`Create Return / Refund #${shortId(order.id)}`, `<form id="returnRequestForm" class="form-grid">
+        <div class="card panel full"><h2>Order Summary</h2><p>Customer: <b>${order.customer || order.user_id || '-'}</b></p><p>Amount: <b>${money(order.total)}</b></p><p>Status: ${statusPill(order.status)}</p></div>
+        <label>Status<select id="returnStatus"><option value="requested">Requested</option><option value="approved">Approve Now</option><option value="rejected">Reject</option></select></label>
+        <label>Refund Method<select id="returnMethod"><option value="wallet">Wallet</option><option value="original_payment">Original Payment</option><option value="upi">UPI</option><option value="store_credit">Store Credit</option></select></label>
+        <label class="full">Reason / Notes<textarea id="returnNotes" required>Return request created by admin.</textarea></label>
+        <div class="full actions"><button class="btn ghost" type="button" onclick="closeModal()">Cancel</button><button class="btn primary" type="submit">Save Return Request</button></div>
+      </form>`);
+      $('returnRequestForm').onsubmit = async (e) => {
+        e.preventDefault();
+        await request(`/admin/returns/${order.id}/status`, {
+          method: 'PATCH',
+          body: JSON.stringify({
+            status: $('returnStatus').value,
+            refundMethod: $('returnMethod').value,
+            notes: $('returnNotes').value,
+          }),
+        });
+        closeModal();
+        await refresh();
+        setRoute('returns');
+        showToast('Return request saved and synced.');
+      };
+    }
+    async function approveRefund(id) {
+      if (!confirm('Approve this refund and notify the customer?')) return;
+      await request(`/admin/refunds/${id}/approve`, { method: 'POST', body: JSON.stringify({ notes: $('refundNotes')?.value || '' }) });
+      closeModal(); await refresh(); setRoute('returns');
+    }
+    async function rejectRefund(id) {
+      const reason = prompt('Reason for rejection');
+      if (!reason) return;
+      await request(`/admin/refunds/${id}/reject`, { method: 'POST', body: JSON.stringify({ reason }) });
+      closeModal(); await refresh(); setRoute('returns');
+    }
+    async function openCustomer(id) {
+      const data = await request(`/admin/customers/${id}`);
+      modal(`Customer ${data.customer.name || data.customer.phone}`, `<div class="grid two-col">
+        <div class="card panel"><h2>Profile</h2><p><b>${data.customer.name || 'Retailer'}</b></p><p>${data.customer.shop_name || ''}</p><p>${data.customer.phone}</p><p>${data.customer.area || ''} ${data.customer.pincode || ''}</p></div>
+        <div class="card panel"><h2>Wallet & Points</h2><p>Wallet balance: <b>${money(data.wallet?.balance)}</b></p><p>Points balance: <b>${(data.pointsLedger || []).reduce((sum, p) => sum + (p.type === 'earned' ? Number(p.points) : -Number(p.points)), 0)}</b></p><div class="actions"><button class="btn primary" onclick="openWalletAdjust('${id}')">Adjust Wallet</button><button class="btn ghost" onclick="openPointsAdjust('${id}')">Adjust Points</button></div></div>
+        <div class="card panel">${table('Address Book', ['Name','Address','Phone'], rows(data.addresses || [], 'No addresses', (a) => `<tr><td>${a.name || '-'}</td><td>${a.line1}, ${a.area || ''}, ${a.city || ''} ${a.pincode || ''}</td><td>${a.phone || '-'}</td></tr>`))}</div>
+        <div class="card panel">${table('Order History', ['Order','Total','Status','Date'], rows(data.orders || [], 'No orders', (o) => `<tr><td>#${shortId(o.id)}</td><td>${money(o.total)}</td><td>${statusPill(o.status)}</td><td>${date(o.created_at)}</td></tr>`))}</div>
+        <div class="card panel">${table('Wallet Transactions', ['Type','Amount','Reason','Date'], rows(data.walletTransactions || [], 'No wallet transactions', (w) => `<tr><td>${w.type}</td><td>${money(w.amount)}</td><td>${w.reason}</td><td>${date(w.created_at)}</td></tr>`))}</div>
+        <div class="card panel">${table('Points Ledger', ['Type','Points','Reason','Date'], rows(data.pointsLedger || [], 'No point entries', (p) => `<tr><td>${p.type}</td><td>${p.points}</td><td>${p.reason}</td><td>${date(p.created_at)}</td></tr>`))}</div>
+      </div>`);
+    }
+    async function openWalletAdjust(customerId) {
+      modal('Adjust Wallet', `<form id="walletAdjustForm" class="form-grid">
+        <label>Type<select id="walletType"><option value="credit">Credit</option><option value="debit">Debit</option></select></label>
+        <label>Amount<input id="walletAmount" type="number" min="1" required /></label>
+        <label class="full">Reason<input id="walletReason" value="Admin adjustment" required /></label>
+        <div class="full actions"><button class="btn ghost" type="button" onclick="closeModal()">Cancel</button><button class="btn primary" type="submit">Save Adjustment</button></div>
+      </form>`);
+      $('walletAdjustForm').onsubmit = async (e) => {
+        e.preventDefault();
+        await request(`/admin/wallet/customers/${customerId}/transactions`, { method: 'POST', body: JSON.stringify({ type: $('walletType').value, amount: $('walletAmount').value, reason: $('walletReason').value }) });
+        closeModal(); await refresh(); alert('Wallet adjusted.');
+      };
+    }
+    async function openPointsAdjust(customerId) {
+      modal('Adjust Points', `<form id="pointsAdjustForm" class="form-grid">
+        <label>Type<select id="pointsType"><option value="earned">Credit</option><option value="redeemed">Debit</option><option value="expired">Expire</option></select></label>
+        <label>Points<input id="pointsAmount" type="number" min="1" required /></label>
+        <label class="full">Reason<input id="pointsReason" value="Admin adjustment" required /></label>
+        <div class="full actions"><button class="btn ghost" type="button" onclick="closeModal()">Cancel</button><button class="btn primary" type="submit">Save Points</button></div>
+      </form>`);
+      $('pointsAdjustForm').onsubmit = async (e) => {
+        e.preventDefault();
+        await request(`/admin/customers/${customerId}/points`, { method: 'POST', body: JSON.stringify({ type: $('pointsType').value, points: $('pointsAmount').value, reason: $('pointsReason').value }) });
+        closeModal(); await refresh(); alert('Points adjusted.');
+      };
+    }
+    async function deleteCrud(path, label) {
+      if (!confirm(`This will permanently delete this ${label}. Are you sure?`)) return;
+      await request(path, { method: 'DELETE' });
+      await refresh();
+    }
+    async function bulkDeleteCatalog(type, endpoint, label, cascadeCopy = '') {
+      const ids = selectedIds(type);
+      if (!ids.length) return showToast(`Select ${label} first.`);
+      const cascade = cascadeCopy ? `\n\n${cascadeCopy}` : '';
+      if (!confirm(`Delete ${ids.length} selected ${label}?${cascade}`)) return;
+      try {
+        const result = await request(endpoint, { method: 'POST', body: JSON.stringify({ ids }) });
+        resetSelection(type);
+        await refresh();
+        setRoute(type);
+        showToast(`Deleted ${result.deleted || ids.length} ${label}.${result.affectedProducts ? ` ${result.affectedProducts} related products removed from the app.` : ''}`);
+      } catch (error) {
+        showToast(error.message || `Could not delete selected ${label}.`);
+      }
+    }
+    function openLoyaltyTier(id = '') {
+      const item = state.loyaltyTiers.find((x) => x.id === id) || {};
+      modal(id ? 'Edit Loyalty Tier' : 'Add Loyalty Tier', `<form id="tierForm" class="form-grid">
+        <label>Name<input id="tierName" value="${item.name || ''}" required /></label>
+        <label>Min Points<input id="tierMinPoints" type="number" value="${item.min_points || 0}" required /></label>
+        <label class="full">Benefits JSON<textarea id="tierBenefits">${JSON.stringify(item.benefits_json || { benefit: 'Priority offers' })}</textarea></label>
+        <div class="full actions"><button class="btn ghost" type="button" onclick="closeModal()">Cancel</button><button class="btn primary" type="submit">Save Tier</button></div>
+      </form>`);
+      $('tierForm').onsubmit = async (e) => {
+        e.preventDefault();
+        await request(id ? `/admin/loyalty/tiers/${id}` : '/admin/loyalty/tiers', { method: id ? 'PUT' : 'POST', body: JSON.stringify({ name: $('tierName').value, minPoints: $('tierMinPoints').value, benefitsJson: JSON.parse($('tierBenefits').value || '{}') }) });
+        closeModal(); await refresh(); setRoute('rewards');
+      };
+    }
+    function openLoyaltyRule(id = '') {
+      const item = state.loyaltyRules.find((x) => x.id === id) || {};
+      modal(id ? 'Edit Earning Rule' : 'Add Earning Rule', `<form id="ruleForm" class="form-grid">
+        <label>Action<input id="ruleAction" value="${item.action || 'place_order'}" required /></label>
+        <label>Points Awarded<input id="rulePoints" type="number" value="${item.points_awarded || 0}" required /></label>
+        <label>Status<select id="ruleActive"><option value="true" ${item.active !== false ? 'selected' : ''}>Active</option><option value="false" ${item.active === false ? 'selected' : ''}>Inactive</option></select></label>
+        <div class="full actions"><button class="btn ghost" type="button" onclick="closeModal()">Cancel</button><button class="btn primary" type="submit">Save Rule</button></div>
+      </form>`);
+      $('ruleForm').onsubmit = async (e) => {
+        e.preventDefault();
+        await request(id ? `/admin/loyalty/rules/${id}` : '/admin/loyalty/rules', { method: id ? 'PUT' : 'POST', body: JSON.stringify({ action: $('ruleAction').value, pointsAwarded: $('rulePoints').value, active: $('ruleActive').value === 'true' }) });
+        closeModal(); await refresh(); setRoute('rewards');
+      };
+    }
+    function openReward(id = '') {
+      const item = state.loyaltyRewards.find((x) => x.id === id) || {};
+      modal(id ? 'Edit Redeemable Reward' : 'Add Redeemable Reward', `<form id="rewardForm" class="form-grid">
+        <label>Title<input id="rewardTitle" value="${item.title || ''}" required /></label>
+        <label>Points Cost<input id="rewardCost" type="number" value="${item.points_cost || 100}" required /></label>
+        <label>Reward Type<select id="rewardType"><option value="coupon">Coupon</option><option value="free_delivery">Free Delivery</option><option value="product">Product</option></select></label>
+        <label>Stock Limit<input id="rewardStock" type="number" value="${item.stock_limit || ''}" /></label>
+        <label>Status<select id="rewardActive"><option value="true" ${item.active !== false ? 'selected' : ''}>Active</option><option value="false" ${item.active === false ? 'selected' : ''}>Inactive</option></select></label>
+        <label class="full">Reward Value JSON<textarea id="rewardValue">${JSON.stringify(item.reward_value_json || { coupon: 'VYPAR100' })}</textarea></label>
+        <div class="full actions"><button class="btn ghost" type="button" onclick="closeModal()">Cancel</button><button class="btn primary" type="submit">Save Reward</button></div>
+      </form>`);
+      $('rewardType').value = item.reward_type || 'coupon';
+      $('rewardForm').onsubmit = async (e) => {
+        e.preventDefault();
+        await request(id ? `/admin/loyalty/rewards/${id}` : '/admin/loyalty/rewards', { method: id ? 'PUT' : 'POST', body: JSON.stringify({ title: $('rewardTitle').value, pointsCost: $('rewardCost').value, rewardType: $('rewardType').value, stockLimit: $('rewardStock').value || null, active: $('rewardActive').value === 'true', rewardValueJson: JSON.parse($('rewardValue').value || '{}') }) });
+        closeModal(); await refresh(); setRoute('rewards');
+      };
+    }
+    function openReferralSettings() {
+      modal('Referral Settings', `<form id="referralForm" class="form-grid">
+        <label>Reward Amount<input id="referralReward" type="number" value="${state.referrals.settings?.reward_amount || 200}" required /></label>
+        <div class="full actions"><button class="btn ghost" type="button" onclick="closeModal()">Cancel</button><button class="btn primary" type="submit">Save Settings</button></div>
+      </form>`);
+      $('referralForm').onsubmit = async (e) => {
+        e.preventDefault();
+        await request('/admin/referrals/settings', { method: 'PUT', body: JSON.stringify({ rewardAmount: $('referralReward').value }) });
+        closeModal(); await refresh(); setRoute('referrals');
+      };
+    }
+    function openHomeSection(id = null) {
+        const section = id ? state.homeSections.find((item) => item.id === id) : null;
+        const configText = section?.config ? JSON.stringify(section.config, null, 2) : '{}';
+        openModal(`
+          <div class="modal-head">
+            <h2>\${section ? 'Edit' : 'Add'} Home Section</h2>
+            <button class="btn ghost" onclick="closeModal()">Close</button>
+          </div>
+          <form class="form-grid" onsubmit="saveHomeSection(event, '\${id || ''}')">
+            <label>Title *<input name="title" value="\${escapeHtml(section?.title || '')}" required /></label>
+            <label>Section Key *<input name="section_key" value="\${escapeHtml(section?.section_key || '')}" placeholder="top_deals" required /></label>
+            <label>Type
+              <select name="type">
+                ${['product_carousel', 'banner', 'category_grid', 'top_brands', 'feature_grid', 'text_block', 'custom_html'].map((type) => '<option value="' + type + '" ' + ((section?.type || 'product_carousel') === type ? 'selected' : '') + '>' + type.replaceAll('_', ' ') + '</option>').join('')}
+              </select>
+            </label>
+            <label>Position<input name="position" type="number" value="\${Number(section?.position ?? section?.display_order ?? 0)}" /></label>
+            <label>Status
+              <select name="enabled">
+                <option value="true" \${section?.enabled === false || section?.active === false ? '' : 'selected'}>Active</option>
+                <option value="false" \${section?.enabled === false || section?.active === false ? 'selected' : ''}>Inactive</option>
+              </select>
+            </label>
+            <label>Starts At<input name="starts_at" type="datetime-local" value="\${toLocalInput(section?.starts_at)}" /></label>
+            <label>Ends At<input name="ends_at" type="datetime-local" value="\${toLocalInput(section?.ends_at)}" /></label>
+            <label class="wide">Config JSON<textarea name="config" rows="8" spellcheck="false">\${escapeHtml(configText)}</textarea></label>
+            <div class="wide modal-actions">
+              <button class="btn ghost" type="button" onclick="closeModal()">Cancel</button>
+              <button class="btn primary" type="submit">Save Section</button>
+            </div>
+          </form>
+        `);
+      }
+    function openDeliveryZone(id = '') {
+      const item = state.deliveryZones.find((x) => x.id === id) || {};
+      modal(id ? 'Edit Delivery Zone' : 'Add Delivery Zone', `<form id="zoneForm" class="form-grid">
+        <label>Name<input id="zoneName" value="${item.name || ''}" required /></label>
+        <label>Coverage Type<select id="zoneType"><option value="pincode" ${item.zone_type !== 'radius' ? 'selected' : ''}>Pincode List</option><option value="radius" ${item.zone_type === 'radius' ? 'selected' : ''}>Radius from point</option></select></label>
+        <label class="wide">Pincodes<input id="zonePincodes" value="${Array.isArray(item.pincodes_json) ? item.pincodes_json.join(',') : ''}" placeholder="841226,841227" /></label>
+        <label>Center Latitude<input id="zoneLat" type="number" step="0.000001" value="${item.center_lat || ''}" placeholder="26.2196" /></label>
+        <label>Center Longitude<input id="zoneLng" type="number" step="0.000001" value="${item.center_lng || ''}" placeholder="84.3567" /></label>
+        <label>Radius KM<input id="zoneRadius" type="number" step="0.1" value="${item.radius_km || ''}" placeholder="200" /></label>
+        <label>ETA Minutes<input id="zoneEta" type="number" value="${item.estimated_delivery_minutes || 120}" /></label>
+        <label>Delivery Fee<input id="zoneFee" type="number" value="${item.delivery_fee || 0}" /></label>
+        <label>Free Delivery Above<input id="zoneFree" type="number" value="${item.free_delivery_min_order || 999}" /></label>
+        <label>Status<select id="zoneActive"><option value="true" ${item.active !== false ? 'selected' : ''}>Active</option><option value="false" ${item.active === false ? 'selected' : ''}>Inactive</option></select></label>
+        <div class="full actions"><button class="btn ghost" type="button" onclick="closeModal()">Cancel</button><button class="btn primary" type="submit">Save Zone</button></div>
+      </form>`);
+      $('zoneForm').onsubmit = async (e) => {
+        e.preventDefault();
+        await request(id ? `/admin/delivery-zones/${id}` : '/admin/delivery-zones', { method: id ? 'PUT' : 'POST', body: JSON.stringify({ name: $('zoneName').value, zoneType: $('zoneType').value, pincodes: $('zonePincodes').value, centerLat: $('zoneLat').value, centerLng: $('zoneLng').value, radiusKm: $('zoneRadius').value, estimatedDeliveryMinutes: $('zoneEta').value, deliveryFee: $('zoneFee').value, freeDeliveryMinOrder: $('zoneFree').value, active: $('zoneActive').value === 'true' }) });
+        closeModal(); await refresh(); setRoute('delivery-zones');
+      };
+    }
+    async function saveSettings(e) {
+      e.preventDefault();
+      const body = {
+        appName: $('settingAppName').value,
+        supportEmail: $('settingEmail').value,
+        supportPhone: $('settingPhone').value,
+        currency: $('settingCurrency').value,
+        timeZone: $('settingZone').value,
+        currentVersion: $('settingVersion').value,
+        minimumVersion: $('settingMinVersion').value,
+        maintenanceMode: $('settingMaintenance').value === 'true',
+      };
+      state.settings = await request('/admin/settings', { method: 'PUT', body: JSON.stringify(body) });
+      alert('Settings saved.');
+      renderSettings();
+    }
+    function openPushNotification() {
+      modal('Send Push Notification', `<form id="pushForm" class="form-grid">
+        <label class="full">Title<input id="pushTitle" value="Mega Sale is Live!" required /></label>
+        <label class="full">Message<textarea id="pushMessage" required>Get up to 50% off on your favorite products. Shop now!</textarea></label>
+        <label>Send To<select id="pushAudience"><option value="all">All Users</option><option value="specific">Specific Users With Token</option></select></label>
+        <label class="wide">Optional User IDs<input id="pushUsers" placeholder="comma separated user ids" /></label>
+        <div class="full actions"><button class="btn ghost" type="button" onclick="closeModal()">Cancel</button><button class="btn primary" type="submit">Send Notification</button></div>
+      </form>`);
+      $('pushForm').onsubmit = sendPushNotification;
+    }
+    async function sendPushNotification(e) {
+      e.preventDefault();
+      const data = await request('/admin/notifications', {
+        method: 'POST',
+        body: JSON.stringify({
+          title: $('pushTitle').value,
+          message: $('pushMessage').value,
+          audience: $('pushAudience').value,
+          userIds: $('pushUsers').value.split(',').map((v) => v.trim()).filter(Boolean),
+        }),
+      });
+      alert(data.sent ? `Notification sent to ${data.count} users.` : `Not sent: ${data.reason}`);
+      closeModal();
+    }
+    function openAdminUser(id = '') {
+      const user = state.users.find((u) => u.id === id) || {};
+      modal(id ? 'Edit Admin Access' : 'Add Admin Access', `<form id="adminUserForm" class="form-grid">
+        <input type="hidden" id="adminUserId" value="${id}" />
+        <label>Admin Name *<input id="adminName" value="${user.name || ''}" required /></label>
+        <label>Email *<input id="adminEmail" type="email" value="${user.email || ''}" required /></label>
+        <label>Role<select id="adminRoleId">${state.roles.map((r) => `<option value="${r.id}" ${user.role_id===r.id?'selected':''}>${r.name}</option>`).join('')}</select></label>
+        <label>Status<select id="adminStatus"><option value="active" ${user.status !== 'inactive' ? 'selected' : ''}>Active</option><option value="inactive" ${user.status === 'inactive' ? 'selected' : ''}>Inactive</option></select></label>
+        <label class="wide">Password ${id ? '(leave blank to keep current)' : '*'}<input id="adminPassword" type="password" ${id ? '' : 'required'} minlength="6" /></label>
+        <div class="full actions"><button class="btn ghost" type="button" onclick="closeModal()">Cancel</button><button class="btn primary" type="submit">${id ? 'Save Admin' : 'Create Admin'}</button></div>
+      </form>`);
+      $('adminUserForm').onsubmit = saveAdminUser;
+    }
+    async function saveAdminUser(e) {
+      e.preventDefault();
+      const id = $('adminUserId').value;
+      const body = {
+        name: $('adminName').value.trim(),
+        email: $('adminEmail').value.trim(),
+        roleId: $('adminRoleId').value,
+        status: $('adminStatus').value,
+      };
+      if ($('adminPassword').value) body.password = $('adminPassword').value;
+      try {
+        await request(id ? `/admin/users/${id}` : '/admin/users', { method: id ? 'PUT' : 'POST', body: JSON.stringify(body) });
+        closeModal();
+        await refresh();
+        setRoute('users');
+        alert(id ? 'Admin updated successfully.' : 'Admin created successfully.');
+      } catch (error) {
+        alert(error.message);
+      }
+    }
+    function openRolePermissions(id = '') {
+      const role = state.roles.find((r) => r.id === id) || { permissions: [] };
+      const modules = ['dashboard','orders','products','brands','categories','customers','marketing','coupons','banners','reviews','returns','reports','payments','payouts','settings','logs','support','users','rewards','merchandising','delivery_zones','notifications'];
+      const actions = ['view','add','edit','delete','export','import'];
+      const checked = (m, a) => (role.permissions || []).some((p) => p.module === m && p.action === a && p.allowed);
+      modal(id ? 'Edit Role & Permissions' : 'Add Role & Permissions', `<form id="roleForm" class="form-grid">
+        <input type="hidden" id="roleId" value="${id}" />
+        <label>Role Name *<input id="roleName" value="${role.name || ''}" required /></label>
+        <label>Status<select id="roleStatus"><option value="active" ${role.status !== 'inactive' ? 'selected' : ''}>Active</option><option value="inactive" ${role.status === 'inactive' ? 'selected' : ''}>Inactive</option></select></label>
+        <label class="wide">Description<input id="roleDescription" value="${role.description || ''}" /></label>
+        <div class="full card panel"><h2>Permissions</h2><div class="table-wrap"><table><thead><tr><th>Module</th>${actions.map((a)=>`<th>${a}</th>`).join('')}</tr></thead><tbody>${modules.map((m)=>`<tr><td><b>${m}</b></td>${actions.map((a)=>`<td><input type="checkbox" data-permission="${m}:${a}" ${checked(m,a)?'checked':''} /></td>`).join('')}</tr>`).join('')}</tbody></table></div></div>
+        <div class="full actions"><button class="btn ghost" type="button" onclick="closeModal()">Cancel</button><button class="btn primary" type="submit">${id ? 'Save Role' : 'Create Role'}</button></div>
+      </form>`);
+      $('roleForm').onsubmit = saveRole;
+    }
+    async function saveRole(e) {
+      e.preventDefault();
+      const id = $('roleId').value;
+      const permissions = [...document.querySelectorAll('[data-permission]')].map((box) => {
+        const [module, action] = box.dataset.permission.split(':');
+        return { module, action, allowed: box.checked };
+      });
+      const body = { name: $('roleName').value.trim(), description: $('roleDescription').value.trim(), status: $('roleStatus').value, permissions };
+      try {
+        await request(id ? `/admin/roles/${id}` : '/admin/roles', { method: id ? 'PUT' : 'POST', body: JSON.stringify(body) });
+        closeModal(); await refresh(); setRoute('users'); alert(id ? 'Role updated.' : 'Role created.');
+      } catch (error) { alert(error.message); }
+    }
+    async function deleteRole(id) {
+      const role = state.roles.find((r) => r.id === id);
+      if (confirm(`This will permanently delete role ${role?.name || ''} - are you sure?`)) {
+        await request(`/admin/roles/${id}`, { method: 'DELETE' });
+        await refresh();
+      }
+    }
+    function openProduct(id = '') {
+      const p = state.products.find((x) => x.id === id) || {};
+      const variants = p.variants?.length ? p.variants : [{ variant_name: p.size || 'Default', sku: p.sku || '', mrp: p.mrp || 0, selling_price: p.buy_price || 0, stock_quantity: p.stock || 0, unit: 'pcs', pack_quantity: 1, cost_price: p.buy_price || 0, is_default: true, status: 'active', is_active: true, tax_percent: 0, discount_percent: 0, low_stock_alert: 0, barcode: '' }];
+      modal(id ? 'Edit Product' : 'Add Product', `<form id="productForm" class="form-grid">
+        <input type="hidden" id="productId" value="${id}" />
+        <label>Product Name *<input id="productName" value="${p.name_en || ''}" required /></label>
+        <label>Category *<select id="productCategory" required><option value="">Select category</option>${state.categories.map((c) => `<option value="${c.id}" ${p.category_id===c.id?'selected':''}>${c.name_en}</option>`).join('')}</select></label>
+        <label>Brand<select id="productBrandId"><option value="">No brand</option>${state.brands.map((b) => `<option value="${b.id}" ${p.brand_id===b.id?'selected':''}>${b.name}</option>`).join('')}</select></label>
+        ${imageUploader(p.image_url || '', 'productImageUrl')}
+        <label class="full">Description<textarea id="productDescription">${p.description || ''}</textarea></label>
+        <label>Status<select id="productActive"><option value="true" ${p.is_active!==false?'selected':''}>Active</option><option value="false" ${p.is_active===false?'selected':''}>Inactive</option></select></label>
+        <div class="full card panel"><div class="title-row"><h2>Variants</h2><button class="btn ghost" type="button" onclick="addVariantRow()">+ Add Variant</button></div><div id="variantsTable"></div></div>
+        <div class="full card panel">
+          <div class="title-row"><h2>Additional Details</h2></div>
+          <div class="form-grid" style="padding:0">
+            <label>HSN Code<input id="productHsnCode" value="${esc(p.hsn_code || '')}" placeholder="e.g. 1905" /></label>
+            <label>Country of Origin<input id="productCountryOfOrigin" value="${esc(p.country_of_origin || 'India')}" /></label>
+            <label>Shelf Life<input id="productShelfLife" value="${esc(p.shelf_life || '')}" placeholder="e.g. 9 Months" /></label>
+            <label class="full">Highlights <span class="muted">(comma-separated, e.g. Made with wheat &amp; milk, No artificial flavors)</span><input id="productHighlights" value="${esc((p.highlights || []).join(', '))}" /></label>
+            <label class="full">Ingredients<textarea id="productIngredients" placeholder="List all ingredients separated by commas.">${esc(p.ingredients || '')}</textarea></label>
+            <label class="full">Storage Instructions<textarea id="productStorageInstructions" placeholder="Store in a cool, dry place. Keep away from direct sunlight.">${esc(p.storage_instructions || '')}</textarea></label>
+            <label class="full">Meta Title <span class="muted">(SEO)</span><input id="productMetaTitle" value="${esc(p.meta_title || '')}" /></label>
+            <label class="full">Meta Description <span class="muted">(SEO)</span><textarea id="productMetaDescription">${esc(p.meta_description || '')}</textarea></label>
+          </div>
+        </div>
+        <div class="full actions"><button class="btn ghost" type="button" onclick="closeModal()">Cancel</button><button id="saveProductBtn" class="btn orange" type="submit">${id ? 'Save Changes' : 'Save Product'}</button></div>
+      </form>`);
+      state.editingVariants = variants.map((v) => ({ ...v }));
+      renderVariantRows();
+      $('productForm').onsubmit = saveProduct;
+    }
+    function variantPreview(v) {
+      const unitMrp = Number(v.mrp || 0);
+      const selling = Number(v.selling_price ?? v.sellingPrice ?? 0);
+      const cost = Number(v.cost_price ?? v.costPrice ?? 0);
+      const pack = Math.max(1, Number(v.pack_quantity ?? v.packQuantity ?? 1));
+      const totalMrp = unitMrp * pack;
+      const save = totalMrp > 0 ? Math.max(0, Math.round(((totalMrp - selling) / totalMrp) * 100)) : 0;
+      const margin = (selling - cost).toFixed(2);
+      return `<span class="variant-preview"><span>MRP ${money(unitMrp)}/p · Pack ${pack}</span><span>${money(totalMrp)} total MRP · ${save}% off</span><b>${money(margin)} margin</b></span>`;
+    }
+    function renderVariantRows() {
+      $('variantsTable').innerHTML = `<div class="table-wrap product-variant-wrap"><table><thead><tr><th>Size Label</th><th>SKU</th><th>Pack Qty</th><th>Unit MRP</th><th>Selling Price</th><th>Cost</th><th>Discount %</th><th>Tax %</th><th>Stock</th><th>Low Stock Alert</th><th>Barcode</th><th>Unit</th><th>Preview</th><th>Default</th><th>Status</th><th></th></tr></thead><tbody>${(state.editingVariants || []).map((v, i) => `<tr>
+        <td><input value="${v.variant_name || v.variantName || ''}" onchange="state.editingVariants[${i}].variant_name=this.value" required /></td>
+        <td><input value="${v.sku || ''}" onchange="state.editingVariants[${i}].sku=this.value" required /></td>
+        <td><input type="number" min="1" value="${v.pack_quantity ?? v.packQuantity ?? 1}" onchange="state.editingVariants[${i}].pack_quantity=Number(this.value);renderVariantRows()" /></td>
+        <td><input type="number" value="${v.mrp || 0}" onchange="state.editingVariants[${i}].mrp=Number(this.value);renderVariantRows()" /></td>
+        <td><input type="number" value="${v.selling_price || v.sellingPrice || 0}" onchange="state.editingVariants[${i}].selling_price=Number(this.value);renderVariantRows()" /></td>
+        <td><input type="number" value="${v.cost_price ?? v.costPrice ?? 0}" onchange="state.editingVariants[${i}].cost_price=Number(this.value);renderVariantRows()" /></td>
+        <td><input type="number" min="0" max="100" value="${v.discount_percent ?? v.discountPercent ?? 0}" onchange="state.editingVariants[${i}].discount_percent=Number(this.value)" /></td>
+        <td><input type="number" min="0" max="100" value="${v.tax_percent ?? v.taxPercent ?? 0}" onchange="state.editingVariants[${i}].tax_percent=Number(this.value)" /></td>
+        <td><input type="number" value="${v.stock_quantity ?? v.stockQuantity ?? 0}" onchange="state.editingVariants[${i}].stock_quantity=Number(this.value)" /></td>
+        <td><input type="number" min="0" value="${v.low_stock_alert ?? v.lowStockAlert ?? 0}" onchange="state.editingVariants[${i}].low_stock_alert=Number(this.value)" /></td>
+        <td><input value="${esc(v.barcode || '')}" onchange="state.editingVariants[${i}].barcode=this.value" /></td>
+        <td><select onchange="state.editingVariants[${i}].unit=this.value">${['ml','g','kg','l','pcs'].map((u) => `<option ${u===(v.unit || 'pcs')?'selected':''}>${u}</option>`).join('')}</select></td>
+        <td>${variantPreview(v)}</td>
+        <td><input type="checkbox" ${v.is_default || v.isDefault ? 'checked' : ''} onchange="state.editingVariants.forEach((x,ix)=>x.is_default=ix===${i});renderVariantRows()" /></td>
+        <td><select onchange="state.editingVariants[${i}].status=this.value;state.editingVariants[${i}].is_active=this.value==='active'"><option value="active" ${(v.status || (v.is_active === false ? 'inactive' : 'active')) !== 'inactive' ? 'selected' : ''}>Active</option><option value="inactive" ${(v.status || (v.is_active === false ? 'inactive' : 'active')) === 'inactive' ? 'selected' : ''}>Inactive</option></select></td>
+        <td><button class="btn danger" type="button" onclick="removeVariantRow(${i})">Delete</button></td>
+      </tr>`).join('')}</tbody></table></div>`;
+    }
+    function addVariantRow() {
+      state.editingVariants = state.editingVariants || [];
+      state.editingVariants.push({ variant_name: '', sku: '', pack_quantity: 1, mrp: 0, selling_price: 0, cost_price: 0, stock_quantity: 0, unit: 'pcs', is_default: state.editingVariants.length === 0, status: 'active', is_active: true, tax_percent: 0, discount_percent: 0, low_stock_alert: 0, barcode: '' });
+      renderVariantRows();
+    }
+    async function removeVariantRow(index) {
+      if (!confirm('This will permanently delete this variant row - are you sure?')) return;
+      const productId = $('productId')?.value;
+      const variant = state.editingVariants[index];
+      if (productId && variant?.id) await request(`/admin/products/${productId}/variants/${variant.id}`, { method: 'DELETE' });
+      state.editingVariants.splice(index, 1);
+      if (state.editingVariants.length && !state.editingVariants.some((v) => v.is_default)) state.editingVariants[0].is_default = true;
+      renderVariantRows();
+    }
+    async function saveProduct(e) {
+      e.preventDefault();
+      clearFormErrors('productForm');
+      const id = $('productId').value;
+      const brand = state.brands.find((b) => b.id === $('productBrandId').value);
+      const productName = $('productName').value.trim();
+      const generatedSku = `sku-${slugify(productName || 'product')}-${Date.now()}`;
+      const variants = (state.editingVariants || []).map((variant, index) => ({
+        ...variant,
+        variant_name: String(variant.variant_name || variant.variantName || (index === 0 ? 'Default' : '')).trim(),
+        sku: String(variant.sku || (index === 0 ? generatedSku : '')).trim(),
+        is_default: Boolean(variant.is_default || variant.isDefault || index === 0),
+        pack_quantity: Math.max(1, Number(variant.pack_quantity ?? variant.packQuantity ?? 1)),
+        cost_price: Number(variant.cost_price ?? variant.costPrice ?? 0),
+        status: variant.status || (variant.is_active === false ? 'inactive' : 'active'),
+        is_active: variant.is_active !== false && variant.status !== 'inactive',
+      }));
+      if (!productName) return fieldError('productName', 'Product name is required');
+      if (!$('productCategory').value) return fieldError('productCategory', 'Please select a category before saving');
+      if (!variants.length || variants.some((v) => !v.variant_name || !v.sku)) {
+        return formError('productForm', new Error('Add at least one valid variant with size label and SKU.'));
+      }
+      if (variants.some((v) => Number(v.pack_quantity) < 1)) {
+        return formError('productForm', new Error('Pack quantity must be at least 1 for every variant.'));
+      }
+      if (variants.some((v) => Number(v.mrp || 0) > 0 && Number(v.selling_price || 0) > Number(v.mrp || 0) * Math.max(1, Number(v.pack_quantity || 1)))) {
+        return formError('productForm', new Error('Selling price cannot be greater than Total MRP (Unit MRP x Pack Qty).'));
+      }
+      const productImageUrl = $('productImageUrl').value.trim();
+      const body = {
+        sku: variants.find((v) => v.is_default)?.sku || variants[0].sku,
+        categoryId: $('productCategory').value, brand: brand?.name || null, brandId: $('productBrandId').value || null,
+        nameEn: productName, imageUrl: productImageUrl, description: $('productDescription').value,
+        mrp: Number(variants.find((v) => v.is_default)?.mrp || variants[0].mrp || 0), buyPrice: Number(variants.find((v) => v.is_default)?.selling_price || variants[0].selling_price || 0), stock: Number(variants.find((v) => v.is_default)?.stock_quantity || variants[0].stock_quantity || 0),
+        imagesJson: productImageUrl ? [productImageUrl] : [],
+        isActive: $('productActive').value === 'true',
+        hsnCode: $('productHsnCode').value.trim(),
+        countryOfOrigin: $('productCountryOfOrigin').value.trim() || 'India',
+        shelfLife: $('productShelfLife').value.trim(),
+        ingredients: $('productIngredients').value.trim(),
+        storageInstructions: $('productStorageInstructions').value.trim(),
+        metaTitle: $('productMetaTitle').value.trim(),
+        metaDescription: $('productMetaDescription').value.trim(),
+        highlights: $('productHighlights').value.split(',').map((h) => h.trim()).filter(Boolean),
+      };
+      const saveButton = $('saveProductBtn');
+      saveButton.disabled = true;
+      saveButton.textContent = id ? 'Saving Changes...' : 'Saving Product...';
+      try {
+        const saved = await request(id ? `/admin/products/${id}` : '/admin/products', { method: id ? 'PUT' : 'POST', body: JSON.stringify(body) });
+        const productId = id || saved.id;
+        for (const v of variants) {
+          const variantBody = { variantName: v.variant_name, sku: v.sku, packQuantity: Number(v.pack_quantity || 1), mrp: Number(v.mrp || 0), sellingPrice: Number(v.selling_price || 0), costPrice: Number(v.cost_price || 0), stockQuantity: Number(v.stock_quantity || 0), unit: v.unit || 'pcs', isDefault: Boolean(v.is_default), isActive: v.is_active !== false, status: v.status || 'active', taxPercent: Number(v.tax_percent || 0), discountPercent: Number(v.discount_percent || 0), lowStockAlert: Number(v.low_stock_alert || 0), barcode: v.barcode || null };
+          await request(v.id ? `/admin/products/${productId}/variants/${v.id}` : `/admin/products/${productId}/variants`, { method: v.id ? 'PUT' : 'POST', body: JSON.stringify(variantBody) });
+        }
+        closeModal();
+        await refresh();
+        setRoute('products');
+        showToast(id ? 'Product updated successfully.' : 'Product created successfully.');
+      } catch (error) {
+        formError('productForm', error, {
+          nameEn: 'productName',
+          categoryId: 'productCategory',
+          brandId: 'productBrandId',
+          sku: 'productName',
+          variantName: 'variantsTable',
+          variant: 'variantsTable',
+        });
+      } finally {
+        if ($('saveProductBtn')) {
+          $('saveProductBtn').disabled = false;
+          $('saveProductBtn').textContent = id ? 'Save Changes' : 'Save Product';
+        }
+      }
+    }
+    async function deleteProduct(id) {
+      const product = state.products.find((p) => p.id === id);
+      if (!confirm(`Delete ${product?.name_en || 'this product'} from the app? Existing order history will be preserved.`)) return;
+      await request(`/admin/products/${id}`, { method: 'DELETE' });
+      state.selected.products.delete(String(id));
+      await refresh();
+      showToast('Product deleted from the app.');
+    }
+    function openResetCatalog() {
+      modal('Reset Catalog Data', `<form id="resetCatalogForm" class="form-grid">
+        <div class="full error-box">
+          This permanently removes all products, product variants, categories, brands, catalog cart items, and home-section product links. Existing order history is preserved but detached from deleted catalog rows.
+        </div>
+        <label class="full">Type DELETE CATALOG to confirm<input id="resetConfirmation" autocomplete="off" placeholder="DELETE CATALOG" /></label>
+        <div class="full actions"><button class="btn ghost" type="button" onclick="closeModal()">Cancel</button><button id="resetCatalogBtn" class="btn danger" type="submit">Reset Catalog Data</button></div>
+      </form>`);
+      $('resetCatalogForm').onsubmit = async (event) => {
+        event.preventDefault();
+        const button = $('resetCatalogBtn');
+        button.disabled = true;
+        button.textContent = 'Resetting...';
+        try {
+          const data = await request('/admin/catalog/reset', {
+            method: 'POST',
+            body: JSON.stringify({ confirmation: $('resetConfirmation').value }),
+          });
+          closeModal();
+          state.selected.products.clear();
+          state.selected.categories.clear();
+          state.selected.brands.clear();
+          await refresh();
+          setRoute('products');
+          const counts = data.counts || {};
+          showToast(`Catalog reset complete: ${counts.products || 0} products, ${counts.categories || 0} categories, ${counts.brands || 0} brands removed.`);
+        } catch (error) {
+          formError('resetCatalogForm', error);
+        } finally {
+          if ($('resetCatalogBtn')) {
+            $('resetCatalogBtn').disabled = false;
+            $('resetCatalogBtn').textContent = 'Reset Catalog Data';
+          }
+        }
+      };
+    }
+    async function exportProductsCsv() {
+      const res = await fetch(`${API}/admin/products/export`, { headers: { Authorization: `Bearer ${state.token}` } });
+      if (!res.ok) return showToast('Export failed.');
+      const blob = await res.blob();
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'vyparhub-products.csv';
+      a.click();
+      URL.revokeObjectURL(a.href);
+    }
+    async function downloadImportTemplate(type = 'products') {
+      const res = await fetch(`${API}/admin/import-template/${type}`, { headers: { Authorization: `Bearer ${state.token}` } });
+      if (!res.ok) return setImportError('Template download failed. Please check your session and try again.');
+      const blob = await res.blob();
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `vyparhub-${type}-template.csv`;
+      a.click();
+      URL.revokeObjectURL(a.href);
+    }
+    const importState = { type: 'products', filename: '', csv: '', parsed: null };
+    const productImportHeaders = ['name_en','product_sku','category','brand','description','image_url','variant_name','sku','pack_quantity','unit_mrp','selling_price','cost_price','stock_quantity','unit','is_default','is_active','status','total_mrp'];
+    const importRequired = {
+      products: ['name_en', 'product_sku', 'category', 'brand', 'variant_name', 'sku', 'pack_quantity', 'unit_mrp', 'selling_price', 'cost_price', 'stock_quantity', 'unit', 'total_mrp'],
+      brands: ['name'],
+      categories: ['name_en'],
+    };
+    const importEndpoints = { products: '/admin/products/import', brands: '/admin/brands/import', categories: '/admin/categories/import' };
+    function normalizeImportHeader(header) {
+      const normalized = String(header || '').trim().replace(/^\uFEFF/, '').toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '');
+      const aliases = {
+        pack_of: 'pack_quantity',
+        pack_qty: 'pack_quantity',
+        pack_quantity: 'pack_quantity',
+        unit_mrp: 'unit_mrp',
+        mrp: 'unit_mrp',
+        unit_mrp_per_piece: 'unit_mrp',
+        mrp_per_piece: 'unit_mrp',
+        mrp_per_pc: 'unit_mrp',
+        total_mrp: 'total_mrp',
+        pack_mrp: 'total_mrp',
+        mrp_total: 'total_mrp',
+      };
+      return aliases[normalized] || normalized;
+    }
+    function importSlug(value) {
+      return String(value || '').trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+    }
+    function importVariantSku(values) {
+      const productPart = importSlug(values.product_sku);
+      const variantPart = importSlug(values.sku || values.variant_name || values.pack_quantity || 'default');
+      if (!productPart) return String(values.sku || '').trim().toLowerCase();
+      return variantPart ? `${productPart}-${variantPart}` : productPart;
+    }
+    function setImportError(message = '') {
+      const el = $('importError');
+      if (el) el.textContent = message;
+      if (!el && message) showToast(message);
+      const input = $('importCsv');
+      if (input) input.classList.toggle('invalid', Boolean(message));
+    }
+    function parseCsvRows(csv) {
+      const lines = String(csv || '').replace(/^\uFEFF/, '').split(/\r?\n/).filter((line) => line.trim());
+      if (!lines.length) return { headers: [], rows: [], errors: [{ rowNumber: 1, reason: 'No content found.' }] };
+      const parseLine = (line) => {
+        const cells = [];
+        let current = '';
+        let quoted = false;
+        for (let i = 0; i < line.length; i += 1) {
+          const ch = line[i];
+          if (ch === '"' && quoted && line[i + 1] === '"') { current += '"'; i += 1; continue; }
+          if (ch === '"') { quoted = !quoted; continue; }
+          if (ch === ',' && !quoted) { cells.push(current.trim()); current = ''; continue; }
+          current += ch;
+        }
+        cells.push(current.trim());
+        return { cells, malformed: quoted };
+      };
+      const headerResult = parseLine(lines[0]);
+      const headers = headerResult.cells.map(normalizeImportHeader);
+      const rows = [];
+      const errors = [];
+      if (headerResult.malformed) errors.push({ rowNumber: 1, reason: 'Header row has an unclosed quote.' });
+      lines.slice(1).forEach((line, index) => {
+        const rowNumber = index + 2;
+        const result = parseLine(line);
+        if (result.malformed) errors.push({ rowNumber, reason: 'Malformed row: unclosed quote.' });
+        if (result.cells.length !== headers.length) {
+          errors.push({ rowNumber, reason: `Wrong column count: expected ${headers.length}, found ${result.cells.length}.` });
+        }
+        rows.push({
+          rowNumber,
+          values: Object.fromEntries(headers.map((header, i) => [header, result.cells[i] || ''])),
+          rawCells: result.cells,
+        });
+      });
+      return { headers, rows, errors };
+    }
+    function classifyImportRows(type, parsed) {
+      const required = importRequired[type] || [];
+      const errors = [...parsed.errors];
+      const validRows = [];
+      const headerSet = new Set(parsed.headers || []);
+      if (type === 'products') {
+        const missingHeaders = productImportHeaders.filter((header) => !headerSet.has(header));
+        missingHeaders.forEach((header) => errors.push({ rowNumber: 1, reason: `Missing required column: ${header}` }));
+        if (missingHeaders.length) return { validRows, errors };
+      }
+      const invalidRowNumbers = new Set(errors.map((error) => error.rowNumber).filter((rowNumber) => rowNumber > 1));
+      const existingKeys = new Set();
+      const existingVariantOwners = new Map();
+      if (type === 'products') {
+        state.products.forEach((p) => {
+          const productSku = String(p.sku || '').toLowerCase();
+          if (productSku) existingKeys.add(`product_sku:${productSku}`);
+          (p.variants || []).forEach((v) => {
+            if (!v.sku) return;
+            const variantSku = String(v.sku).toLowerCase();
+            existingKeys.add(`variant_sku:${variantSku}`);
+            existingVariantOwners.set(variantSku, productSku);
+          });
+        });
+      } else if (type === 'brands') {
+        state.brands.forEach((b) => b.name && existingKeys.add(`name:${String(b.name).toLowerCase()}`));
+      } else {
+        state.categories.forEach((c) => {
+          if (c.name_en) existingKeys.add(`name:${String(c.name_en).toLowerCase()}`);
+          if (c.slug) existingKeys.add(`slug:${String(c.slug).toLowerCase()}`);
+        });
+      }
+      const seenVariantOwners = new Map();
+      parsed.rows.forEach((row) => {
+        if (invalidRowNumbers.has(row.rowNumber)) return;
+        const missing = required.filter((field) => !String(row.values[field] || '').trim());
+        if (missing.length) {
+          errors.push({ rowNumber: row.rowNumber, reason: `Missing required field(s): ${missing.join(', ')}` });
+          return;
+        }
+        let key = '';
+        let lookupPrefix = 'name';
+        if (type === 'products') {
+          const productKey = String(row.values.product_sku || '').toLowerCase();
+          const variantKey = importVariantSku(row.values);
+          const uploadedOwner = seenVariantOwners.get(variantKey);
+          if (uploadedOwner && uploadedOwner !== productKey) {
+            errors.push({ rowNumber: row.rowNumber, reason: `Variant SKU "${row.values.sku}" is used for more than one product in this import.` });
+            return;
+          }
+          seenVariantOwners.set(variantKey, productKey);
+          const existingOwner = existingVariantOwners.get(variantKey);
+          if (existingOwner && existingOwner !== productKey) {
+            errors.push({ rowNumber: row.rowNumber, reason: `Variant SKU "${row.values.sku}" already belongs to another product. Use a unique variant SKU.` });
+            return;
+          }
+          const productExists = existingKeys.has(`product_sku:${productKey}`);
+          const variantExists = existingKeys.has(`variant_sku:${variantKey}`);
+          validRows.push({ ...row, action: productExists || variantExists ? 'Update' : 'Create' });
+          return;
+        }
+        if (type === 'brands') key = row.values.name;
+        if (type === 'categories') key = row.values.slug || row.values.name_en || row.values.name;
+        if (type === 'categories') lookupPrefix = row.values.slug ? 'slug' : 'name';
+        if (type === 'brands') lookupPrefix = 'name';
+        const action = existingKeys.has(`${lookupPrefix}:${String(key).toLowerCase()}`) ? 'Update' : 'Create';
+        validRows.push({ ...row, action });
+      });
+      return { validRows, errors };
+    }
+    function csvFromRows(headers, rows) {
+      const cell = (value) => JSON.stringify(value ?? '');
+      return [headers.map(cell).join(','), ...rows.map((row) => headers.map((header) => cell(row.values[header] || '')).join(','))].join('\n');
+    }
+    function downloadImportErrors() {
+      const errors = importState.parsed?.errors || [];
+      if (!errors.length) return;
+      const csv = ['row_number,reason', ...errors.map((error) => `${error.rowNumber},${JSON.stringify(error.reason)}`)].join('\n');
+      const blob = new Blob([csv], { type: 'text/csv' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `vyparhub-${importState.type}-import-errors.csv`;
+      a.click();
+      URL.revokeObjectURL(a.href);
+    }
+    function combineCsvTexts(csvTexts) {
+      const mergedHeaders = [];
+      const mergedRows = [];
+      csvTexts.forEach((csv, index) => {
+        const parsed = parseCsvRows(csv);
+        if (!parsed.headers.length) return;
+        if (!mergedHeaders.length) {
+          mergedHeaders.push(...parsed.headers);
+        } else {
+          const sameHeaders = mergedHeaders.length === parsed.headers.length &&
+            mergedHeaders.every((header, i) => header === parsed.headers[i]);
+          if (!sameHeaders) {
+            throw new Error(`File or sheet ${index + 1} has different columns. Use the same template columns for every uploaded file.`);
+          }
+        }
+        parsed.rows.forEach((row) => mergedRows.push(row.values));
+      });
+      if (!mergedHeaders.length || !mergedRows.length) {
+        throw new Error('No data rows were found in the selected file(s).');
+      }
+      const cell = (value) => JSON.stringify(value ?? '');
+      return [
+        mergedHeaders.map(cell).join(','),
+        ...mergedRows.map((row) => mergedHeaders.map((header) => cell(row[header] || '')).join(',')),
+      ].join('\n');
+    }
+    async function csvTextsFromImportFile(file) {
+      const ext = file.name.split('.').pop().toLowerCase();
+      if (ext === 'xlsx') {
+        if (!window.XLSX) throw new Error('Excel parser is still loading. Please try again in a moment.');
+        const buffer = await file.arrayBuffer();
+        const workbook = XLSX.read(buffer, { type: 'array' });
+        return workbook.SheetNames
+          .map((sheetName) => XLSX.utils.sheet_to_csv(workbook.Sheets[sheetName]))
+          .filter((csv) => parseCsvRows(csv).rows.length);
+      }
+      if (ext === 'csv') return [await file.text()];
+      throw new Error('Choose .csv or .xlsx file(s).');
+    }
+    async function handleImportFiles(files) {
+      const selectedFiles = Array.from(files || []);
+      if (!selectedFiles.length) return;
+      importState.filename = selectedFiles.length === 1 ? selectedFiles[0].name : `${selectedFiles.length} files`;
+      setImportError('');
+      try {
+        const csvTexts = [];
+        for (const file of selectedFiles) {
+          csvTexts.push(...await csvTextsFromImportFile(file));
+        }
+        importState.csv = combineCsvTexts(csvTexts);
+        $('importCsv').value = importState.csv;
+        renderImportPreview(false);
+      } catch (error) {
+        setImportError(error.message);
+      }
+    }
+    function renderImportPreview(commitReady = false) {
+      const csv = $('importCsv')?.value || importState.csv || '';
+      importState.type = $('importType')?.value || importState.type || 'products';
+      importState.csv = csv;
+      const parsed = parseCsvRows(csv);
+      const classified = classifyImportRows(importState.type, parsed);
+      importState.parsed = { ...parsed, ...classified };
+      const ready = classified.validRows.length;
+      const errors = classified.errors;
+      $('importPreview').textContent = `${ready} valid row${ready === 1 ? '' : 's'} ready${importState.filename ? ` from ${importState.filename}` : ''}. ${errors.length ? `${errors.length} row issue${errors.length === 1 ? '' : 's'} found.` : ''}`;
+      const createCount = classified.validRows.filter((row) => row.action === 'Create').length;
+      const updateCount = classified.validRows.filter((row) => row.action === 'Update').length;
+      const previewRows = [
+        ...classified.validRows.slice(0, 12).map((row) => `<tr><td>${row.rowNumber}</td><td>${row.action}</td><td>${esc(row.values.name_en || row.values.name || row.values.sku || row.values.slug || '-')}</td><td>${esc(row.values.category || row.values.status || row.values.selling_price || '-')}</td></tr>`),
+        ...errors.slice(0, 12).map((error) => `<tr><td>${error.rowNumber}</td><td>${statusPill('Error')}</td><td colspan="2">${esc(error.reason)}</td></tr>`),
+      ].join('');
+      $('importPreviewTable').innerHTML = `<div class="import-preview-table"><table><thead><tr><th>Row</th><th>Action</th><th>Name / Key</th><th>Info</th></tr></thead><tbody>${previewRows || '<tr><td colspan="4">No rows to preview.</td></tr>'}</tbody></table></div>`;
+      $('importSummary').innerHTML = `<b>${createCount}</b> to create · <b>${updateCount}</b> to update · <b>${errors.length}</b> with errors`;
+      $('downloadErrorsBtn').style.display = errors.length ? 'inline-flex' : 'none';
+      $('confirmImportBtn').disabled = !ready;
+      $('confirmImportBtn').style.display = commitReady && ready ? 'inline-flex' : 'none';
+      return { ready, errors };
+    }
+    function openCatalogImport(type = 'products') {
+      const labels = { products: 'Products', brands: 'Brands', categories: 'Categories' };
+      modal(`Import ${labels[type] || 'Catalog'} CSV`, `<form id="importForm" class="form-grid">
+        <div class="full muted">Choose a CSV or Excel file first. Paste CSV rows only if you need a fallback path.</div>
+        <label>Import Type<select id="importType"><option value="products" ${type==='products'?'selected':''}>Products</option><option value="brands" ${type==='brands'?'selected':''}>Brands</option><option value="categories" ${type==='categories'?'selected':''}>Categories</option></select></label>
+        <div class="actions"><button class="btn ghost" type="button" onclick="downloadImportTemplate(document.getElementById('importType').value)">Download Template</button></div>
+        <div class="import-drop full">
+          <strong>Upload catalog file</strong>
+          <input id="importFile" type="file" accept=".csv,.xlsx" multiple />
+          <span id="importFilename" class="muted">No file selected.</span>
+        </div>
+        <label class="full">Paste CSV rows here <span class="muted">(fallback)</span><textarea id="importCsv" rows="9" placeholder="Paste CSV rows here"></textarea></label>
+        <div id="importPreview" class="full muted">0 data rows ready.</div>
+        <div id="importError" class="full msg"></div>
+        <div id="importSummary" class="full muted"></div>
+        <div id="importPreviewTable" class="full"></div>
+        <div class="full actions"><button class="btn ghost" type="button" onclick="closeModal()">Cancel</button><button id="downloadErrorsBtn" class="btn danger" type="button" onclick="downloadImportErrors()" style="display:none">Download Error Report</button><button class="btn primary" type="submit">Preview Rows</button><button id="confirmImportBtn" class="btn orange" type="button" style="display:none">Confirm Import</button></div>
+      </form>`);
+      importState.type = type;
+      importState.filename = '';
+      importState.csv = '';
+      importState.parsed = null;
+      $('importType').addEventListener('change', () => {
+        importState.type = $('importType').value;
+        renderImportPreview(false);
+      });
+      $('importFile').addEventListener('change', (event) => {
+        const files = Array.from(event.target.files || []);
+        $('importFilename').textContent = files.length ? files.map((file) => file.name).join(', ') : 'No file selected.';
+        handleImportFiles(files);
+      });
+      $('importCsv').addEventListener('input', () => {
+        importState.filename = '';
+        $('importFilename').textContent = 'Using pasted CSV content.';
+        renderImportPreview(false);
+      });
+      $('importForm').onsubmit = async (e) => {
+        e.preventDefault();
+        setImportError('');
+        const { ready, errors } = renderImportPreview(true);
+        if (!($('importCsv').value || '').trim()) return setImportError('Choose a CSV/XLSX file or paste CSV rows before importing.');
+        if (!ready) return setImportError(errors[0]?.reason || 'No valid rows are ready to import.');
+        if (errors.length) setImportError('Some rows have errors. Valid rows can still be imported, or download the error report and fix the file first.');
+      };
+      $('confirmImportBtn').onclick = async () => {
+        setImportError('');
+        const parsed = importState.parsed || {};
+        const validRows = parsed.validRows || [];
+        if (!validRows.length) return setImportError('No valid rows are ready to import.');
+        try {
+          $('confirmImportBtn').disabled = true;
+          $('confirmImportBtn').textContent = 'Importing...';
+          const csv = csvFromRows(parsed.headers, validRows);
+          const result = await request(importEndpoints[importState.type], { method: 'POST', body: JSON.stringify({ csv }) });
+          const failures = result.failures || [];
+          await refresh();
+          showToast(`${result.created || 0} created, ${result.updated || 0} updated, ${result.failed || 0} failed.`);
+          if (failures.length) {
+            importState.parsed = { ...(importState.parsed || {}), errors: failures };
+            setImportError(`${failures.length} row${failures.length === 1 ? '' : 's'} failed during import. Download the error report and fix those rows.`);
+            $('downloadErrorsBtn').style.display = 'inline-flex';
+            $('importPreviewTable').innerHTML = `<div class="import-preview-table"><table><thead><tr><th>Row</th><th>Status</th><th>Reason</th></tr></thead><tbody>${failures.map((error) => `<tr><td>${error.rowNumber}</td><td>${statusPill('Error')}</td><td>${esc(error.reason)}</td></tr>`).join('')}</tbody></table></div>`;
+          } else {
+            closeModal();
+          }
+        } catch (error) {
+          const serverFailures = Array.isArray(error.details) ? error.details : (Array.isArray(error.details?.failures) ? error.details.failures : []);
+          importState.parsed = importState.parsed || { errors: [] };
+          importState.parsed.errors = [
+            ...(importState.parsed.errors || []),
+            ...(serverFailures.length ? serverFailures : [{ rowNumber: 0, reason: error.message || 'Import failed on the server.' }]),
+          ];
+          setImportError(error.message || 'Import failed. Please review the rows and try again.');
+          $('downloadErrorsBtn').style.display = 'inline-flex';
+          if (serverFailures.length) {
+            $('importPreviewTable').innerHTML = `<div class="import-preview-table"><table><thead><tr><th>Row</th><th>Status</th><th>Reason</th></tr></thead><tbody>${serverFailures.map((failure) => `<tr><td>${failure.rowNumber}</td><td>${statusPill('Error')}</td><td>${esc(failure.reason)}</td></tr>`).join('')}</tbody></table></div>`;
+          }
+        } finally {
+          if ($('confirmImportBtn')) {
+            $('confirmImportBtn').disabled = false;
+            $('confirmImportBtn').textContent = 'Confirm Import';
+          }
+        }
+      };
+    }
+    const openImportProducts = () => openCatalogImport('products');
+    function openCategory(id = '') {
+      const c = state.categories.find((x) => x.id === id) || {};
+      modal(id ? 'Edit Category' : 'Add Category', `<form id="categoryForm" class="form-grid">
+        <input type="hidden" id="categoryId" value="${id}" />
+        <label>Category Name *<input id="categoryName" value="${c.name_en || ''}" required /></label>
+        <label>Slug *<input id="categorySlug" value="${c.slug || ''}" required /></label>
+        <label>Sort Order<input id="categorySort" type="number" value="${c.sort_order || 0}" /></label>
+        ${imageUploader(c.image_url || '', 'categoryImageUrl')}
+        <label>Tint<input id="categoryTint" value="${c.tint || '#F8DFC7'}" /></label>
+        <label>Status<select id="categoryActive"><option value="true" ${c.is_active!==false?'selected':''}>Active</option><option value="false" ${c.is_active===false?'selected':''}>Inactive</option></select></label>
+        <label class="full">Description<textarea id="categoryDescription" placeholder="Brief description of this category.">${esc(c.description || '')}</textarea></label>
+        <div class="full actions"><button class="btn ghost" type="button" onclick="closeModal()">Cancel</button><button class="btn orange" type="submit">Save Category</button></div>
+      </form>`);
+      $('categoryName').oninput = () => { if (!id) $('categorySlug').value = slugify($('categoryName').value); };
+      $('categoryForm').onsubmit = saveCategory;
+    }
+    async function saveCategory(e) {
+      e.preventDefault();
+      const id = $('categoryId').value;
+      const body = { nameEn: $('categoryName').value, slug: $('categorySlug').value || slugify($('categoryName').value), imageUrl: $('categoryImageUrl').value.trim(), tint: $('categoryTint').value, sortOrder: Number($('categorySort').value), isActive: $('categoryActive').value === 'true', description: $('categoryDescription').value.trim() };
+      try {
+        await request(id ? `/admin/categories/${id}` : '/admin/categories', { method: id ? 'PUT' : 'POST', body: JSON.stringify(body) });
+        closeModal();
+        await refresh();
+        setRoute('categories');
+        showToast(id ? 'Category updated successfully.' : 'Category saved successfully.');
+      } catch (error) {
+        formError('categoryForm', error, {
+          name_en: 'categoryName',
+          nameEn: 'categoryName',
+          name: 'categoryName',
+          slug: 'categorySlug',
+          image_url: 'categoryImageUrl',
+          imageUrl: 'categoryImageUrl',
+        });
+      }
+    }
+    async function deleteCategory(id) {
+      const category = state.categories.find((c) => c.id === id);
+      if (!confirm(`Delete ${category?.name_en || 'this category'} and all related products from the app? Existing order history will be preserved.`)) return;
+      const result = await request(`/admin/categories/${id}`, { method: 'DELETE' });
+      state.selected.categories.delete(String(id));
+      await refresh();
+      showToast(`Category deleted. ${(result.productIds || []).length} related products removed from the app.`);
+    }
+    function openBrand(id = '') {
+      const b = state.brands.find((x) => x.id === id) || {};
+      modal(id ? 'Edit Brand' : 'Add Brand', `<form id="brandForm" class="form-grid">
+        <input type="hidden" id="brandId" value="${id}" />
+        <label>Brand Name *<input id="brandName" value="${esc(b.name || '')}" required /></label>
+        <label>Slug<input id="brandSlug" value="${esc(b.slug || '')}" placeholder="auto-generated from name" /></label>
+        <label>Logo URL<input id="brandLogo" value="${esc(b.logo_url || '')}" /></label>
+        <label>Status<select id="brandStatus"><option value="active" ${(b.status || 'active') === 'active' ? 'selected' : ''}>Active</option><option value="inactive" ${b.status === 'inactive' ? 'selected' : ''}>Inactive</option></select></label>
+        <label class="full">Description<textarea id="brandDescription" placeholder="Brief description about this brand.">${esc(b.description || '')}</textarea></label>
+        <div class="full actions"><button class="btn ghost" type="button" onclick="closeModal()">Cancel</button><button class="btn orange" type="submit">${id ? 'Save Changes' : 'Save Brand'}</button></div>
+      </form>`);
+      $('brandName').oninput = () => { if (!id) $('brandSlug').value = slugify($('brandName').value); };
+      $('brandForm').onsubmit = saveBrand;
+    }
+    async function saveBrand(e) {
+      e.preventDefault();
+      const id = $('brandId').value;
+      const body = { name: $('brandName').value.trim(), slug: $('brandSlug').value.trim() || slugify($('brandName').value), logoUrl: $('brandLogo').value.trim(), status: $('brandStatus').value, isActive: $('brandStatus').value === 'active', description: $('brandDescription').value.trim() };
+      try {
+        await request(id ? `/admin/brands/${id}` : '/admin/brands', { method: id ? 'PUT' : 'POST', body: JSON.stringify(body) });
+        closeModal(); await refresh(); setRoute('brands'); showToast(id ? 'Brand updated.' : 'Brand saved.');
+      } catch (error) {
+        formError('brandForm', error, {
+          name: 'brandName',
+          slug: 'brandSlug',
+          logo_url: 'brandLogo',
+          logoUrl: 'brandLogo',
+        });
+      }
+    }
+    async function deleteBrand(id) {
+      const brand = state.brands.find((b) => b.id === id);
+      if (!confirm(`Delete ${brand?.name || 'this brand'} and all related products from the app? Existing order history will be preserved.`)) return;
+      const result = await request(`/admin/brands/${id}`, { method: 'DELETE' });
+      state.selected.brands.delete(String(id));
+      await refresh();
+      showToast(`Brand deleted. ${(result.productIds || []).length} related products removed from the app.`);
+    }
+    function openOffer(id = '') {
+      const o = state.offers.find((x) => x.id === id) || {};
+      modal(id ? 'Edit Coupon / Banner' : 'Add Coupon / Banner', `<form id="offerForm" class="form-grid">
+        <input type="hidden" id="offerId" value="${id}" />
+        <label>Title *<input id="offerTitle" value="${o.title || ''}" required /></label>
+        <label>Coupon Code<input id="offerCode" value="${o.coupon_code || ''}" /></label>
+        <label>Discount %<input id="offerDiscount" type="number" value="${o.discount_percent || 0}" /></label>
+        <label>Applies To<select id="offerAppliesTo"><option value="all">All Products</option><option value="category">Specific Category</option><option value="product">Specific Product</option></select></label>
+        <label>Linked Category<select id="offerCategory"><option value="">No linked category</option>${state.categories.map((c) => `<option value="${c.id}" ${o.category_id===c.id?'selected':''}>${c.name_en}</option>`).join('')}</select></label>
+        <label>Linked Product<select id="offerProduct"><option value="">No linked product</option>${state.products.map((p) => `<option value="${p.id}" ${o.product_id===p.id?'selected':''}>${p.name_en}</option>`).join('')}</select></label>
+        <label>Min Order<input id="offerMinOrder" type="number" value="${o.min_order_amount || ''}" /></label>
+        <label>Max Discount<input id="offerMaxDiscount" type="number" value="${o.max_discount || ''}" /></label>
+        <label>Starts At<input id="offerStarts" type="datetime-local" /></label>
+        <label>Ends At<input id="offerEnds" type="datetime-local" /></label>
+        <label class="wide">Subtitle<input id="offerSubtitle" value="${o.subtitle || ''}" /></label>
+        <label>Status<select id="offerActive"><option value="true" ${o.is_active!==false?'selected':''}>Active</option><option value="false" ${o.is_active===false?'selected':''}>Inactive</option></select></label>
+        ${imageUploader(o.image_url || '', 'offerImageUrl')}
+        <div class="full actions"><button class="btn ghost" type="button" onclick="closeModal()">Cancel</button><button class="btn orange" type="submit">Save</button></div>
+      </form>`);
+      $('offerAppliesTo').value = o.applies_to || 'all';
+      $('offerForm').onsubmit = saveOffer;
+    }
+    async function saveOffer(e) {
+      e.preventDefault();
+      const id = $('offerId').value;
+      const body = { title: $('offerTitle').value, subtitle: $('offerSubtitle').value, couponCode: $('offerCode').value || null, discountPercent: Number($('offerDiscount').value), appliesTo: $('offerAppliesTo').value, categoryId: $('offerCategory').value || null, productId: $('offerProduct').value || null, minOrderAmount: $('offerMinOrder').value || null, maxDiscount: $('offerMaxDiscount').value || null, startsAt: $('offerStarts').value || null, endsAt: $('offerEnds').value || null, imageUrl: $('offerImageUrl').value.trim(), isActive: $('offerActive').value === 'true' };
+      await request(id ? `/admin/offers/${id}` : '/admin/offers', { method: id ? 'PUT' : 'POST', body: JSON.stringify(body) });
+      closeModal(); await refresh();
+    }
+    async function deleteOffer(id) {
+      const offer = state.offers.find((o) => o.id === id);
+      if (confirm(`This will permanently delete ${offer?.title || 'this coupon/banner'} - are you sure?`)) {
+        await request(`/admin/offers/${id}`, { method: 'DELETE' });
+        await refresh();
+      }
+    }
+    async function updateOrder(id, status) {
+      let previous = null;
+      try {
+        if (!confirm(`Move this order to "${String(status).replaceAll('_',' ')}" and notify the customer?`)) return;
+        const order = state.orders.find((o) => o.id === id);
+        previous = order ? { ...order, status_history: [...(order.status_history || [])] } : null;
+        if (order) {
+          patchOrderStatus(id, status);
+          openOrderDetail(id);
+        }
+        const updated = await request(`/admin/orders/${id}/status`, { method: 'PATCH', body: JSON.stringify({ status }) });
+        if (order) {
+          Object.assign(order, updated || {}, { status });
+          order.status_history = [
+            ...(order.status_history || []),
+            { status, changed_at: new Date().toISOString() },
+          ];
+        }
+        await refresh();
+        const refreshed = state.orders.find((o) => o.id === id);
+        if (refreshed) openOrderDetail(id);
+        else closeModal();
+        showToast(`Order marked ${String(status).replaceAll('_',' ')} and customer sync triggered.`);
+      } catch (error) {
+        if (previous) {
+          const index = state.orders.findIndex((o) => o.id === id);
+          if (index >= 0) state.orders.splice(index, 1, previous);
+          openOrderDetail(id);
+        }
+        showToast(error.message || 'Order status update failed.');
+      }
+    }
+    function exportCsv(type) {
+      const map = { products: state.products, orders: state.orders, reports: state.reports.sales || [] };
+      const data = map[type] || [];
+      if (!data.length) return alert('No data to export.');
+      const keys = Object.keys(data[0]);
+      const csv = [keys.join(','), ...data.map((row) => keys.map((k) => JSON.stringify(row[k] ?? '')).join(','))].join('\n');
+      const blob = new Blob([csv], { type: 'text/csv' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob); a.download = `${type}.csv`; a.click(); URL.revokeObjectURL(a.href);
+    }
+    function showToast(message) {
+      $('toast').textContent = message;
+      $('toast').classList.add('open');
+      window.clearTimeout(state.toastTimer);
+      state.toastTimer = window.setTimeout(() => $('toast').classList.remove('open'), 3500);
+    }
+    function clearFormErrors(formId) {
+      const form = $(formId);
+      if (!form) return;
+      form.querySelectorAll('.invalid').forEach((el) => el.classList.remove('invalid'));
+      form.querySelectorAll('.form-error,.form-alert').forEach((el) => el.remove());
+    }
+    function fieldError(inputId, message) {
+      const input = $(inputId);
+      if (!input) return false;
+      input.classList.add('invalid');
+      const error = document.createElement('span');
+      error.className = 'form-error';
+      error.textContent = message;
+      input.insertAdjacentElement('afterend', error);
+      return true;
+    }
+    function formError(formId, error, map = {}) {
+      clearFormErrors(formId);
+      const fields = error.details?.fields || {};
+      let mapped = false;
+      Object.entries(fields).forEach(([key, message]) => {
+        if (map[key]) mapped = fieldError(map[key], message) || mapped;
+      });
+      if (!mapped) {
+        const form = $(formId);
+        if (form) {
+          form.insertAdjacentHTML('afterbegin', `<div class="form-alert full">${error.message}</div>`);
+        }
+      }
+      showToast(error.message);
+    }
+    async function setDashboardRange(range) {
+      state.dashboardRange = range || 'month';
+      localStorage.setItem('vyparhub_dashboard_range', state.dashboardRange);
+      await refreshDashboardOnly();
+    }
+    function updateSocketState(status, message = '') {
+      state.socketStatus = status;
+      const el = $('socketState');
+      if (!el) return;
+      el.classList.remove('offline', 'reconnecting');
+      if (status !== 'connected') el.classList.add(status === 'reconnecting' ? 'reconnecting' : 'offline');
+      el.textContent = message || (status === 'connected' ? 'Live' : status === 'reconnecting' ? 'Reconnecting...' : 'Offline');
+    }
+    function patchById(list, item) {
+      if (!item?.id) return false;
+      const index = list.findIndex((entry) => entry.id === item.id);
+      if (index >= 0) list.splice(index, 1, { ...list[index], ...item });
+      else list.unshift(item);
+      return true;
+    }
+    function patchOrderStatus(orderId, status) {
+      const order = state.orders.find((item) => item.id === orderId);
+      if (!order) return;
+      order.status = status;
+      order.status_history = [
+        ...(order.status_history || []).filter((entry) => entry.status !== status),
+        { status, changed_at: new Date().toISOString() },
+      ];
+    }
+    async function refreshDashboardOnly() {
+      if (!can('dashboard', 'view')) return;
+      try {
+        state.dashboard = await request(`/admin/dashboard?range=${encodeURIComponent(state.dashboardRange)}`);
+        state.dashboardLastUpdated = new Date().toISOString();
+        if (state.route === 'dashboard' || state.route === 'reports') render();
+      } catch (error) {
+        console.warn('Dashboard live refresh failed:', error.message);
+      }
+    }
+    async function refreshCatalogVisibilityOnly() {
+      if (!can('products', 'view')) return;
+      try {
+        state.catalogVisibility = await request('/admin/catalog/visibility');
+        if (state.route === 'dashboard') renderDashboard();
+      } catch (error) {
+        console.warn('Catalog visibility refresh failed:', error.message);
+      }
+    }
+    async function refreshNotificationsOnly() {
+      if (!can('marketing', 'view')) return;
+      try {
+        state.notificationHistory = await request('/admin/notifications');
+        if (state.route === 'notifications') renderNotifications();
+      } catch (error) {
+        console.warn('Notification live refresh failed:', error.message);
+      }
+    }
+    async function refreshReturnsOnly() {
+      if (!can('returns', 'view')) return;
+      try {
+        state.returns = await request('/admin/returns');
+        if (state.route === 'returns') renderReturns();
+      } catch (error) {
+        console.warn('Returns live refresh failed:', error.message);
+      }
+    }
+    async function refreshOrderOnly(orderId) {
+      if (!orderId || !can('orders', 'view')) return;
+      try {
+        const order = await request(`/admin/orders/${orderId}`);
+        patchById(state.orders, order);
+        if (state.route === 'orders' || state.route === 'dashboard' || state.route === 'reviews') render();
+        const modalOpen = $('modal')?.classList.contains('open');
+        const modalTitle = $('modalTitle')?.textContent || '';
+        if (modalOpen && modalTitle.includes(shortId(orderId))) openOrderDetail(orderId);
+      } catch (error) {
+        console.warn('Order live refresh failed:', error.message);
+      }
+    }
+    async function refreshForEvent(event, payload = {}) {
+      state.liveNotifications += 1;
+      $('bellCount').textContent = state.liveNotifications ? state.liveNotifications : '';
+      if (event === 'order.created') showToast(`New order #${shortId(payload.orderId)} received`);
+      if (event === 'refund.created') showToast(`New refund #${shortId(payload.refundId || payload.refundRequestId)} received`);
+      if (event === 'low_stock.alert') showToast(`Low stock alert for ${payload.stock} units`);
+      if (event === 'order.status_changed') showToast(`Order #${shortId(payload.orderId)} moved to ${payload.status}`);
+      if (event === 'order.status_changed') patchOrderStatus(payload.orderId, payload.status);
+      if (event === 'order.created' || event === 'order.status_changed') await refreshOrderOnly(payload.orderId);
+      if ((event === 'refund.created' || event === 'refund.status_changed') && payload.orderId) await refreshOrderOnly(payload.orderId);
+      if (event === 'refund.created' || event === 'refund.status_changed') await refreshReturnsOnly();
+      if (event === 'notification.created') await refreshNotificationsOnly();
+      if (event === 'dashboard.updated' || event === 'order.created' || event === 'order.status_changed' || event === 'refund.created' || event === 'refund.status_changed') {
+        await refreshDashboardOnly();
+      }
+      if (['catalog.updated','product.created','product.updated','product.deleted','category.updated','category.deleted','brand.updated','brand.deleted','home_section.updated'].includes(event)) {
+        await refreshCatalogVisibilityOnly();
+      }
+      if (event === 'low_stock.alert' && state.route === 'products') renderProducts();
+    }
+    function connectAdminSocket() {
+      if (!state.token || !window.io) return;
+      if (state.socket) state.socket.disconnect();
+      updateSocketState('reconnecting', 'Connecting...');
+      state.socket = io('/admin', {
+        auth: { token: state.token },
+        transports: ['websocket', 'polling'],
+        reconnection: true,
+        reconnectionAttempts: Infinity,
+        reconnectionDelay: 800,
+        reconnectionDelayMax: 10000,
+      });
+      ['order.created','order.updated','order.status_changed','refund.created','refund.status_changed','dashboard.updated','low_stock.alert','notification.created','catalog.updated','product.created','product.updated','product.deleted','category.updated','category.deleted','brand.updated','brand.deleted','home_section.updated'].forEach((event) => {
+        state.socket.on(event, (payload) => refreshForEvent(event, payload || {}));
+      });
+      state.socket.on('connect', () => updateSocketState('connected', 'Live'));
+      state.socket.on('disconnect', () => updateSocketState('offline', 'Offline'));
+      state.socket.io.on('reconnect_attempt', () => updateSocketState('reconnecting', 'Reconnecting...'));
+      state.socket.io.on('reconnect_failed', () => updateSocketState('offline', 'Offline'));
+      state.socket.on('connect_error', (error) => {
+        updateSocketState('reconnecting', 'Reconnecting...');
+        console.warn('Admin socket:', error.message);
+      });
+    }
+    function logout() {
+      request('/admin/auth/logout', { method: 'POST', body: JSON.stringify({ refreshToken: state.refreshToken }) }).catch(() => {});
+      if (state.socket) state.socket.disconnect();
+      state.socket = null;
+      clearSession('');
+    }
+    $('loginForm').onsubmit = async (e) => {
+      e.preventDefault();
+      $('loginMsg').textContent = '';
+      try {
+        const data = await request('/admin/auth/login', { method: 'POST', body: JSON.stringify({ email: $('loginEmail').value.trim(), password: $('loginPassword').value }) });
+        state.token = data.accessToken; state.refreshToken = data.refreshToken; state.user = data.admin;
+        localStorage.setItem('vyparhub_admin_access_token', state.token);
+        localStorage.setItem('vyparhub_admin_refresh_token', state.refreshToken);
+        localStorage.setItem('vyparhub_admin_user', JSON.stringify(state.user));
+        $('loginView').classList.add('hidden'); $('appView').classList.remove('hidden');
+        connectAdminSocket();
+        renderNav(); await refresh();
+      } catch (error) { $('loginMsg').textContent = error.message; }
+    };
+    $('hamb').onclick = () => $('sidebar').classList.toggle('open');
+    $('refreshBtn').onclick = refresh;
+    $('modalClose').onclick = closeModal;
+    $('modal').onclick = (e) => { if (e.target.id === 'modal') closeModal(); };
+    let searchTimer = null;
+    $('globalSearch').oninput = () => {
+      clearTimeout(searchTimer);
+      searchTimer = setTimeout(runGlobalSearch, 250);
+    };
+    let deferredInstallPrompt = null;
+    window.addEventListener('beforeinstallprompt', (event) => {
+      event.preventDefault();
+      deferredInstallPrompt = event;
+      $('installBtn').classList.remove('hidden');
+    });
+    $('installBtn').onclick = async () => {
+      if (!deferredInstallPrompt) return;
+      deferredInstallPrompt.prompt();
+      await deferredInstallPrompt.userChoice;
+      deferredInstallPrompt = null;
+      $('installBtn').classList.add('hidden');
+    };
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/admin/sw.js', { scope: '/admin/' }).catch(() => {});
+      });
+    }
+    renderNav();
+    if (state.token) {
+      $('loginView').classList.add('hidden');
+      $('appView').classList.remove('hidden');
+      connectAdminSocket();
+      refresh();
+    }
+  </script>
+</body>
+</html>
