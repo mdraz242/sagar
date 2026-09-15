@@ -1,0 +1,32 @@
+{
+  "version": 2,
+  "installCommand": "cd server && npm install",
+  "builds": [
+    {
+      "src": "server/api/index.cjs",
+      "use": "@vercel/node"
+    },
+    {
+      "src": "server/api/test.cjs",
+      "use": "@vercel/node"
+    },
+    {
+      "src": "server/api/debug.cjs",
+      "use": "@vercel/node"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/api/test",
+      "dest": "server/api/test.cjs"
+    },
+    {
+      "src": "/api/debug",
+      "dest": "server/api/debug.cjs"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "server/api/index.cjs"
+    }
+  ]
+}
