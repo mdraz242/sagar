@@ -1,14 +1,12 @@
-module.exports = async function handler(req, res) {
-  try {
-    const { app } = await import('../server/src/app.js');
-    return app(req, res);
-  } catch (error) {
-    console.error("Vercel Invocation Error:", error);
-    res.status(500).json({
-      success: false,
-      error: "Initialization failed",
-      message: error.message,
-      stack: error.stack
-    });
-  }
+module.exports = function handler(req, res) {
+  res.status(200).json({ 
+    success: true, 
+    message: "Root API works!",
+    nodeVersion: process.version,
+    cwd: process.cwd(),
+    env: {
+      VERCEL: process.env.VERCEL || 'not set',
+      NODE_ENV: process.env.NODE_ENV || 'not set'
+    }
+  });
 };
