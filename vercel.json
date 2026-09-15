@@ -1,6 +1,5 @@
 {
   "version": 2,
-  "installCommand": "cd server && npm install",
   "rewrites": [
     {
       "source": "/(.*)",
