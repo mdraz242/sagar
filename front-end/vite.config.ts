@@ -19,7 +19,7 @@ export default defineConfig({
   // building inside an actual Lovable sandbox, so local Lovable previews
   // are unaffected.
   nitro: {
-    preset: "vercel",
+    preset: process.env.VERCEL ? "vercel" : "node-server",
   },
   tanstackStart: {
     // Redirect TanStack Start's bundled server entry to src/server.ts (our SSR error wrapper).
