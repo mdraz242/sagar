@@ -40,6 +40,7 @@ app.use(
   express.static(path.join(serverRoot, "public/legal"), { extensions: ["html"] }),
 );
 app.use("/preview", express.static(path.join(repoRoot, "preview")));
+app.use("/website", express.static(path.join(repoRoot, "website/dist")));
 app.use("/mobile/assets", express.static(path.join(repoRoot, "mobile/assets")));
 
 app.use("/api", routes);

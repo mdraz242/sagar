@@ -1,0 +1,80 @@
+<svg viewBox="0 0 800 800" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#003399"/>
+      <stop offset="100%" stop-color="#0a1440"/>
+    </linearGradient>
+    <linearGradient id="orangeGrad" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#FF6600"/>
+      <stop offset="100%" stop-color="#FF9900"/>
+    </linearGradient>
+  </defs>
+  <rect width="800" height="800" fill="url(#bg)"/>
+
+  <!-- decorative network dots -->
+  <g opacity="0.25" stroke="#ffffff" stroke-width="1.5">
+    <line x1="40" y1="60" x2="140" y2="120"/>
+    <line x1="140" y1="120" x2="90" y2="220"/>
+    <line x1="660" y1="700" x2="740" y2="640"/>
+    <line x1="700" y1="760" x2="660" y2="700"/>
+  </g>
+  <g fill="#FF9900">
+    <circle cx="40" cy="60" r="5"/>
+    <circle cx="140" cy="120" r="4"/>
+    <circle cx="740" cy="640" r="5"/>
+  </g>
+  <g fill="#5588FF">
+    <circle cx="90" cy="220" r="4"/>
+    <circle cx="700" cy="760" r="4"/>
+    <circle cx="660" cy="700" r="4"/>
+  </g>
+
+  <!-- Top badge -->
+  <rect x="60" y="60" width="270" height="52" rx="26" fill="#FF6600"/>
+  <text x="90" y="94" font-family="Arial, sans-serif" font-size="24" font-weight="bold" fill="#ffffff">FMCG MANUFACTURER</text>
+
+  <!-- Title -->
+  <text x="60" y="200" font-family="Arial, sans-serif" font-size="52" font-weight="900" fill="#ffffff">VyparHub</text>
+  <text x="60" y="260" font-family="Arial, sans-serif" font-size="52" font-weight="900" fill="#FF9900">FMCG Catalogue</text>
+
+  <!-- Product list card -->
+  <rect x="60" y="320" width="680" height="400" rx="24" fill="#ffffff" opacity="0.06"/>
+  <rect x="60" y="320" width="680" height="400" rx="24" fill="none" stroke="#ffffff" stroke-opacity="0.15" stroke-width="1.5"/>
+
+  <!-- product rows -->
+  <g font-family="Arial, sans-serif">
+    <!-- row 1 -->
+    <circle cx="110" cy="380" r="22" fill="url(#orangeGrad)"/>
+    <text x="110" y="388" font-size="22" text-anchor="middle" fill="#ffffff">🍪</text>
+    <text x="150" y="375" font-size="22" font-weight="bold" fill="#ffffff">Biscuits &amp; Namkeen</text>
+    <text x="150" y="400" font-size="16" fill="#cfe0ff">Direct factory price</text>
+
+    <!-- row 2 -->
+    <circle cx="110" cy="460" r="22" fill="#5588FF"/>
+    <text x="110" y="468" font-size="22" text-anchor="middle" fill="#ffffff">🧴</text>
+    <text x="150" y="455" font-size="22" font-weight="bold" fill="#ffffff">Personal &amp; Home Care</text>
+    <text x="150" y="480" font-size="16" fill="#cfe0ff">Verified manufacturers</text>
+
+    <!-- row 3 -->
+    <circle cx="110" cy="540" r="22" fill="url(#orangeGrad)"/>
+    <text x="110" y="548" font-size="22" text-anchor="middle" fill="#ffffff">🥤</text>
+    <text x="150" y="535" font-size="22" font-weight="bold" fill="#ffffff">Cold Drinks &amp; Juices</text>
+    <text x="150" y="560" font-size="16" fill="#cfe0ff">2 hour delivery ready</text>
+
+    <!-- row 4 -->
+    <circle cx="110" cy="620" r="22" fill="#5588FF"/>
+    <text x="110" y="628" font-size="22" text-anchor="middle" fill="#ffffff">🧂</text>
+    <text x="150" y="615" font-size="22" font-weight="bold" fill="#ffffff">Spices, Oil &amp; Grocery</text>
+    <text x="150" y="640" font-size="16" fill="#cfe0ff">Bulk listing, zero markup</text>
+
+    <!-- row 5 -->
+    <circle cx="110" cy="680" r="22" fill="url(#orangeGrad)"/>
+    <text x="110" y="688" font-size="22" text-anchor="middle" fill="#ffffff">🍫</text>
+    <text x="150" y="675" font-size="22" font-weight="bold" fill="#ffffff">Chocolates &amp; Snacks</text>
+    <text x="150" y="700" font-size="16" fill="#cfe0ff">Live demand from Tier 2/3/4</text>
+  </g>
+
+  <!-- bottom tag -->
+  <rect x="500" y="60" width="240" height="52" rx="26" fill="#5588FF"/>
+  <text x="525" y="94" font-family="Arial, sans-serif" font-size="22" font-weight="bold" fill="#ffffff">500+ SKUs</text>
+</svg>
