@@ -1,4 +1,4 @@
-export default async function handler(req, res) {
+module.exports = async function handler(req, res) {
   try {
     const { app } = await import('../src/app.js');
     return app(req, res);
@@ -11,4 +11,4 @@ export default async function handler(req, res) {
       stack: error.stack
     });
   }
-}
+};
